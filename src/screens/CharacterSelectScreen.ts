@@ -7,6 +7,7 @@ import { CHARACTERS } from '../constants/characters';
 import { PixelButton } from '../components/ui/PixelButton';
 import * as SeedService from '../api/SeedService';
 import * as PlayerService from '../api/PlayerService';
+import { OFFLINE_SEED } from '../engine/offline-seed';
 
 interface BaseScreen {
   mount(container: HTMLElement): void;
@@ -34,8 +35,9 @@ export class CharacterSelectScreen implements BaseScreen {
   private selectedId: CharacterID | null = null;
   private characterVideos: HTMLVideoElement[] = [];
   private unsubscribes: Array<() => void> = [];
-  private seeds: Seed[] = [];
-  private selectedSeedId: string | null = null;
+  private seeds: Seed[] = [OFFLINE_SEED];
+  private selectedSeedId: string = OFFLINE_SEED.id;
+  private wrapper: HTMLElement | null = null;
   private selectedCapital: number = 10000;
   private monthlyContribution: number = 200;
   private nickname: string = '';
@@ -140,13 +142,21 @@ export class CharacterSelectScreen implements BaseScreen {
     skyline.className = 'character-select__skyline';
     wrapper.appendChild(skyline);
 
+    this.wrapper = wrapper;
     container.appendChild(wrapper);
 
-    // Fetch seeds in the background
+    // Seeds start as offline fallback; replace with real ones when loaded
     SeedService.fetchSeeds().then((seeds) => {
-      this.seeds = seeds;
       if (seeds.length > 0) {
-        this.selectedSeedId = seeds[0].id;
+        this.seeds = seeds;
+        // Keep current selection if it still exists, otherwise pick first
+        if (!seeds.find(s => s.id === this.selectedSeedId)) {
+          this.selectedSeedId = seeds[0].id;
+        }
+        // Re-render the onboarding panel if it's already open
+        if (this.selectedId && this.wrapper) {
+          this.showOnboardingPanel(this.wrapper);
+        }
       }
     });
   }
@@ -298,12 +308,10 @@ export class CharacterSelectScreen implements BaseScreen {
         }
       });
 
-      // Fetch seed data if a seed is selected
-      if (this.selectedSeedId) {
-        const seedData = await SeedService.fetchSeedData(this.selectedSeedId);
-        if (seedData) {
-          this.store.setState({ seedData });
-        }
+      // Fetch seed data
+      const seedData = await SeedService.fetchSeedData(this.selectedSeedId);
+      if (seedData) {
+        this.store.setState({ seedData });
       }
 
       // Navigate to market select
@@ -343,6 +351,7 @@ export class CharacterSelectScreen implements BaseScreen {
       unsub();
     }
     this.unsubscribes = [];
+    this.wrapper = null;
     if (this.container) {
       this.container.innerHTML = '';
     }

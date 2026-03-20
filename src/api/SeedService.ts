@@ -1,9 +1,10 @@
 import { getSupabase } from './supabase';
 import type { Seed, Asset, SeedData } from '../types';
+import { OFFLINE_SEED, getOfflineSeedData } from '../engine/offline-seed';
 
 export async function fetchSeeds(): Promise<Seed[]> {
   const supabase = getSupabase();
-  if (!supabase) return [];
+  if (!supabase) return [OFFLINE_SEED];
 
   const { data, error } = await supabase
     .from('seeds')
@@ -12,7 +13,7 @@ export async function fetchSeeds(): Promise<Seed[]> {
 
   if (error) {
     console.error('[SeedService] fetchSeeds failed:', error);
-    return [];
+    return [OFFLINE_SEED];
   }
 
   const order: Record<string, number> = { easy: 0, medium: 1, hard: 2 };
@@ -22,8 +23,10 @@ export async function fetchSeeds(): Promise<Seed[]> {
 }
 
 export async function fetchSeedData(seedId: string): Promise<SeedData | null> {
+  if (seedId === OFFLINE_SEED.id) return getOfflineSeedData();
+
   const supabase = getSupabase();
-  if (!supabase) return null;
+  if (!supabase) return getOfflineSeedData();
 
   // Fetch seed
   const { data: seed, error: seedErr } = await supabase
@@ -34,7 +37,7 @@ export async function fetchSeedData(seedId: string): Promise<SeedData | null> {
 
   if (seedErr || !seed) {
     console.error('[SeedService] fetchSeed failed:', seedErr);
-    return null;
+    return getOfflineSeedData();
   }
 
   // Fetch assets for this seed
