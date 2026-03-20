@@ -1,0 +1,312 @@
+/* ============================================================
+   EVENT POPUP — pixel dialog floating over TradingScreen
+   ============================================================ */
+
+.event-popup-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(7, 9, 15, 0.72);
+  z-index: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+.event-popup {
+  position: relative;
+  width: min(680px, 92vw);
+  background: #0a1628;
+  border: 3px solid #40c4ff;
+  box-shadow:
+    0 0 0 1px #0a1628,
+    6px 6px 0 #0d2137,
+    0 0 32px rgba(64, 196, 255, 0.18);
+  image-rendering: pixelated;
+  transform: scale(0.88) translateY(20px);
+  opacity: 0;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.18s ease;
+}
+
+.event-popup--visible {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.event-popup--hiding {
+  transform: scale(0.92) translateY(12px);
+  opacity: 0;
+}
+
+/* Pixel corner accents */
+.event-popup__corner {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #40c4ff;
+  z-index: 1;
+}
+.event-popup__corner--tl { top: -3px; left: -3px; }
+.event-popup__corner--tr { top: -3px; right: -3px; }
+.event-popup__corner--bl { bottom: -3px; left: -3px; }
+.event-popup__corner--br { bottom: -3px; right: -3px; }
+
+/* Header */
+.event-popup__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 8px;
+  background: rgba(13, 33, 55, 0.9);
+  border-bottom: 2px solid #1e3a5f;
+}
+
+.event-popup__header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.event-popup__icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.event-popup__title {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: var(--pixel-gold);
+  text-shadow: 0 0 12px var(--pixel-gold-glow);
+  margin: 0;
+}
+
+.event-popup__subtitle {
+  font-family: var(--font-heading);
+  font-size: 8px;
+  color: var(--muted-gray);
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+/* Body */
+.event-popup__body {
+  display: flex;
+  gap: 14px;
+  padding: 14px 16px;
+  align-items: flex-start;
+}
+
+.event-popup__sprite {
+  flex-shrink: 0;
+  image-rendering: pixelated;
+  border: 2px solid #1e3a5f;
+  background: #0d2137;
+}
+
+.event-popup__text-area {
+  flex: 1;
+  min-width: 0;
+}
+
+.event-popup__text {
+  font-family: var(--font-body);
+  font-size: 20px;
+  line-height: 1.45;
+  color: var(--off-white);
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid #1e3a5f;
+  padding: 10px 12px;
+  min-height: 120px;
+  max-height: 140px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  cursor: pointer;
+  margin: 0;
+}
+
+.event-popup__skip-btn {
+  margin-top: 8px;
+  padding: 6px 12px;
+  font-family: var(--font-heading);
+  font-size: 10px;
+  color: #40c4ff;
+  background: rgba(13, 33, 55, 0.8);
+  border: 2px solid #40c4ff;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-shadow: 0 0 8px #40c4ff;
+  box-shadow: 0 0 8px rgba(64, 196, 255, 0.3);
+}
+
+.event-popup__skip-btn:hover {
+  background: rgba(64, 196, 255, 0.15);
+  box-shadow: 0 0 12px rgba(64, 196, 255, 0.5);
+  transform: scale(1.05);
+}
+
+/* Social proof */
+.event-popup__social {
+  min-height: 52px;
+  max-height: 52px;
+  overflow: hidden;
+  padding: 6px 16px;
+  border-top: 1px solid #1e3a5f;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* Choices */
+.event-popup__choices {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 2px solid #1e3a5f;
+  justify-content: center;
+  flex-wrap: wrap;
+  background: rgba(0, 0, 0, 0.2);
+  min-height: 110px;
+  max-height: 110px;
+  overflow: hidden;
+}
+
+.event-popup__choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.event-popup__choice-desc {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--muted-gray);
+  margin: 0;
+  text-align: center;
+}
+
+/* ============================================================
+   EVENT CARD OVERLAY — 64px Style (legacy full-screen)
+   ============================================================ */
+
+.event-card-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 9, 15, 0.88);
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s;
+}
+
+.event-card {
+  max-width: 680px;
+  width: 90%;
+  background: var(--panel-bg);
+  border: 2px solid var(--panel-border-bright);
+  padding: 0;
+  position: relative;
+  box-shadow: 8px 8px 0 rgba(0,0,0,0.6), 0 0 40px rgba(0,0,0,0.6);
+  animation: slide-up 0.25s ease-out;
+}
+
+.event-card__header {
+  padding: 16px 20px;
+  border-bottom: 2px solid var(--panel-border);
+  background: rgba(26, 51, 85, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.event-card__title {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  color: var(--pixel-gold);
+  text-shadow: 0 0 16px var(--pixel-gold-glow);
+}
+.event-card__subtitle {
+  font-family: var(--font-heading);
+  font-size: 8px;
+  color: var(--muted-gray);
+  letter-spacing: 1px;
+}
+
+.event-card__body {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  align-items: flex-start;
+}
+
+.event-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+.event-card__sprite {
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+.event-card__text {
+  font-family: var(--font-body);
+  font-size: 22px;
+  line-height: 1.45;
+  color: var(--off-white);
+}
+
+/* Fixed-height typing area (prevents card resizing) */
+.event-card__text-block {
+  font-family: var(--font-body);
+  font-size: 22px;
+  line-height: 1.45;
+  color: var(--off-white);
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--panel-border);
+  padding: 12px 12px;
+  min-height: 170px;
+  max-height: 170px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+.event-card__impact {
+  /* Reserve space so dialogue doesn't resize when revealed */
+  min-height: 64px;
+  max-height: 64px;
+  overflow-y: auto;
+}
+
+.event-card__choices {
+  /* Reserve space so dialogue doesn't resize when revealed */
+  min-height: 120px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.event-card__impact {
+  font-family: var(--font-body);
+  font-size: 19px;
+  color: var(--amber);
+  padding: 12px 20px;
+  border-top: 1px solid var(--panel-border);
+  background: rgba(255, 184, 48, 0.04);
+}
+
+.event-card__choices {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 2px solid var(--panel-border);
+  justify-content: center;
+  flex-wrap: wrap;
+  background: rgba(0,0,0,0.2);
+}
+
+.event-card__choice-desc {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--muted-gray);
+  margin-top: 4px;
+  text-align: center;
+}

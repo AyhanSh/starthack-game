@@ -1,0 +1,884 @@
+/* ============================================================
+   TRADING SCREEN — Full Dashboard Redesign
+   ============================================================ */
+
+.trading-screen {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Layout wrapper that holds room + terminal */
+.trading-screen__layout {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* ── Left: Room scene (40%) ─────────────────────────────── */
+.trading-screen__room {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border-right: none;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Centered video stage (80% of screen) */
+.trading-screen__video-stage {
+  position: relative;
+  width: 80vw;
+  height: 80vh;
+  max-width: 1200px;
+  max-height: 720px;
+  border: 2px solid rgba(42, 77, 122, 0.55);
+  box-shadow: 0 24px 120px rgba(0,0,0,0.65);
+  overflow: hidden;
+  z-index: 0;
+  background: #000;
+}
+
+.trading-screen__bg-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: contrast(1.05) saturate(1.05);
+}
+
+
+
+.trading-screen__room-canvas {
+  image-rendering: pixelated;
+  position: relative;
+  z-index: 1;
+  height: min(92vh, 760px);
+  width: auto;
+  max-width: min(96vw, 1100px);
+  aspect-ratio: 4 / 3;
+  box-shadow: 0 20px 80px rgba(0,0,0,0.55);
+  border: 2px solid rgba(42, 77, 122, 0.6);
+}
+
+.trading-screen__char-canvas {
+  position: absolute;
+  image-rendering: pixelated;
+  z-index: 2;
+}
+
+.trading-screen__skip-intro {
+  position: absolute;
+  bottom: 18px;
+  left: 18px;
+  z-index: 12;
+  font-family: var(--font-heading);
+  font-size: 8px;
+  padding: 8px 10px;
+  background: rgba(6, 13, 20, 0.6);
+  border: 2px solid rgba(42, 77, 122, 0.8);
+  color: var(--off-white);
+  cursor: pointer;
+}
+.trading-screen__skip-intro:hover {
+  border-color: rgba(255, 215, 0, 0.7);
+}
+
+/* Phase badge */
+.trading-screen__phase {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  font-family: var(--font-heading);
+  font-size: 7px;
+  color: var(--pixel-gold);
+  background: var(--panel-bg);
+  border: 2px solid var(--panel-border-bright);
+  padding: 6px 10px;
+  letter-spacing: 1px;
+  z-index: 10;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5), 0 0 12px var(--pixel-gold-glow);
+}
+
+/* Season badge */
+.trading-screen__season {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-family: var(--font-heading);
+  font-size: 7px;
+  color: var(--sky-blue);
+  background: var(--panel-bg);
+  border: 2px solid var(--panel-border);
+  padding: 5px 8px;
+  letter-spacing: 1px;
+  z-index: 10;
+}
+
+/* ── Right: Terminal (60%) ──────────────────────────────── */
+.trading-screen__terminal {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  width: min(860px, 70vw);
+  height: auto;
+  aspect-ratio: 5 / 4;
+  max-height: calc(100% - 36px);
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  z-index: 30;
+  pointer-events: auto;
+}
+
+.terminal-monitor {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.trading-screen__terminal--hidden {
+  opacity: 0;
+  transform: translateY(18px) scale(0.98);
+  pointer-events: none;
+}
+
+.trading-screen__terminal--enter {
+  animation: terminal-enter 0.75s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+@keyframes terminal-enter {
+  0% { opacity: 0; transform: translateY(18px) scale(0.98); filter: brightness(0.8) contrast(1.1); }
+  55% { opacity: 1; transform: translateY(0px) scale(1.01); filter: brightness(1.05) contrast(1.05); }
+  100% { opacity: 1; transform: translateY(0px) scale(1); filter: none; }
+}
+
+/* Terminal outer bezel */
+.terminal-bezel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background: linear-gradient(180deg, rgba(16, 24, 34, 0.92), rgba(6, 13, 20, 0.82));
+  border: 2px solid rgba(120, 160, 190, 0.25);
+  outline: 1px solid rgba(0,0,0,0.45);
+  box-shadow:
+    0 16px 80px rgba(0,0,0,0.65),
+    0 0 30px rgba(0, 170, 255, 0.12);
+  animation: crt-bezel-flicker 3.8s steps(2, end) infinite;
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+/* Animated CRT bezel overlays */
+.terminal-bezel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at center, rgba(0, 255, 135, 0.06), transparent 55%),
+    radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.08), transparent 55%),
+    linear-gradient(180deg, rgba(255,255,255,0.08), transparent 45%);
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.9;
+}
+.terminal-bezel::after {
+  content: '';
+  position: absolute;
+  inset: -40% -10%;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(0,0,0,0) 0px,
+    rgba(0,0,0,0) 3px,
+    rgba(0,0,0,0.06) 4px,
+    rgba(0,0,0,0.06) 5px
+  );
+  pointer-events: none;
+  opacity: 0.7;
+  animation: crt-scan 5.2s linear infinite;
+}
+
+@keyframes crt-scan {
+  0% { transform: translateY(-10%); }
+  100% { transform: translateY(10%); }
+}
+
+@keyframes crt-bezel-flicker {
+  0% { filter: brightness(1) contrast(1); }
+  50% { filter: brightness(1.04) contrast(1.02); }
+  100% { filter: brightness(0.98) contrast(1); }
+}
+
+/* Terminal "screen" area */
+.terminal-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: rgba(6, 13, 20, 0.55);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(3px);
+  border: 1px solid rgba(0,0,0,0.35);
+  margin: 10px;
+  border-radius: 5px;
+}
+
+/* Terminal header bar */
+.terminal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--terminal-bg);
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+  cursor: grab;
+  user-select: none;
+}
+.terminal--dragging .terminal-header {
+  cursor: grabbing;
+}
+.terminal-header__title {
+  font-family: var(--font-heading);
+  font-size: 8px;
+  color: var(--pixel-green);
+  letter-spacing: 2px;
+  text-shadow: 0 0 8px var(--pixel-green-glow);
+}
+.terminal-header__time {
+  font-family: var(--font-body);
+  font-size: 20px;
+  color: var(--muted-gray-light);
+}
+
+/* Tab bar */
+.terminal-tabs {
+  background: var(--terminal-bg);
+  border-bottom: 2px solid var(--panel-border);
+  flex-shrink: 0;
+}
+
+/* Scrollable panel area */
+.terminal-panel-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ── Asset Table Panel ──────────────────────────────────── */
+.asset-panel {
+  padding: 0;
+}
+
+/* Category header inside panel */
+.asset-panel__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 8px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--panel-border);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.asset-panel__icon {
+  font-size: 18px;
+  line-height: 1;
+}
+.asset-panel__title {
+  font-family: var(--font-heading);
+  font-size: 9px;
+  color: var(--sky-blue);
+  letter-spacing: 1px;
+}
+.asset-panel__title--fx { color: var(--amber); }
+.asset-panel__title--crypto { color: var(--pixel-purple); }
+
+/* Column headers */
+.asset-table-header {
+  display: grid;
+  grid-template-columns: 120px 90px 70px 70px 70px 1fr 80px;
+  align-items: center;
+  padding: 6px 14px;
+  background: var(--terminal-bg);
+  border-bottom: 1px solid var(--panel-border);
+  gap: 6px;
+}
+.asset-col-label {
+  font-family: var(--font-heading);
+  font-size: 6px;
+  color: var(--muted-gray);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ── Asset Row ──────────────────────────────────────────── */
+.asset-row {
+  display: grid;
+  grid-template-columns: 120px 90px 70px 70px 70px 1fr 80px;
+  align-items: center;
+  padding: 9px 14px;
+  border-bottom: 1px solid rgba(26, 51, 85, 0.4);
+  gap: 6px;
+  transition: background 0.1s;
+  position: relative;
+}
+.asset-row:nth-child(even) {
+  background: rgba(12, 21, 32, 0.5);
+}
+.asset-row:hover {
+  background: rgba(26, 51, 85, 0.25);
+}
+
+/* Flash animation on price update */
+.asset-row--flash-up {
+  animation: flash-green 0.4s ease-out;
+}
+.asset-row--flash-down {
+  animation: flash-red 0.4s ease-out;
+}
+
+/* Name column */
+.asset-row__name-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.asset-row__name {
+  font-family: var(--font-body);
+  font-size: 19px;
+  color: var(--off-white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1;
+}
+.asset-row__ticker {
+  font-family: var(--font-heading);
+  font-size: 6px;
+  color: var(--muted-gray);
+  letter-spacing: 0.5px;
+}
+
+/* Price column */
+.asset-row__price-col {
+  text-align: right;
+}
+.asset-row__price {
+  font-family: var(--font-body);
+  font-size: 22px;
+  color: var(--off-white);
+  line-height: 1;
+  display: block;
+}
+
+/* Change column */
+.asset-row__change {
+  font-family: var(--font-heading);
+  font-size: 7px;
+  padding: 3px 5px;
+  text-align: center;
+}
+.asset-row__change--up {
+  color: var(--pixel-green);
+  background: rgba(0, 255, 135, 0.08);
+  border: 1px solid rgba(0, 255, 135, 0.2);
+}
+.asset-row__change--down {
+  color: var(--pixel-red);
+  background: rgba(255, 45, 85, 0.08);
+  border: 1px solid rgba(255, 45, 85, 0.2);
+}
+
+/* Chart sparkline column */
+.asset-row__chart {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+/* Long/Short buttons */
+.asset-row__pos-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.pos-btn {
+  font-family: var(--font-heading);
+  font-size: 6px;
+  padding: 4px 6px;
+  border: 1px solid var(--panel-border);
+  background: var(--terminal-bg);
+  color: var(--muted-gray);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s, border-color 0.1s, box-shadow 0.1s;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+.pos-btn--long-active {
+  background: rgba(0, 255, 135, 0.12);
+  color: var(--pixel-green);
+  border-color: var(--pixel-green-dim);
+  box-shadow: 0 0 6px var(--pixel-green-glow);
+}
+.pos-btn--short-active {
+  background: rgba(255, 45, 85, 0.12);
+  color: var(--pixel-red);
+  border-color: var(--pixel-red-dim);
+  box-shadow: 0 0 6px var(--pixel-red-glow);
+}
+.pos-btn:hover:not(.pos-btn--long-active):not(.pos-btn--short-active) {
+  border-color: var(--panel-border-bright);
+  color: var(--muted-gray-light);
+}
+
+/* Allocation slider column */
+.asset-row__slider-col {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.asset-row__slider-col .pixel-slider {
+  flex: 1;
+}
+
+/* ── Portfolio Summary Bar ──────────────────────────────── */
+.portfolio-summary {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  background: var(--panel-bg);
+  border-top: 2px solid var(--panel-border-bright);
+  flex-shrink: 0;
+}
+
+.portfolio-summary__left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.portfolio-summary__label {
+  font-family: var(--font-heading);
+  font-size: 6px;
+  color: var(--muted-gray);
+  letter-spacing: 1px;
+}
+.portfolio-summary__value {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  color: var(--pixel-gold);
+  text-shadow: 0 0 8px var(--pixel-gold-glow);
+  white-space: nowrap;
+}
+
+.portfolio-summary__return {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  padding: 4px 8px;
+  border: 1px solid;
+}
+.portfolio-summary__return--up {
+  color: var(--pixel-green);
+  border-color: rgba(0, 255, 135, 0.3);
+  background: rgba(0, 255, 135, 0.06);
+  text-shadow: 0 0 6px var(--pixel-green-glow);
+}
+.portfolio-summary__return--down {
+  color: var(--pixel-red);
+  border-color: rgba(255, 45, 85, 0.3);
+  background: rgba(255, 45, 85, 0.06);
+}
+
+.portfolio-summary__alloc {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.portfolio-summary__alloc-label {
+  font-family: var(--font-heading);
+  font-size: 6px;
+  color: var(--muted-gray);
+  letter-spacing: 1px;
+}
+.portfolio-summary__alloc-bar {
+  height: 8px;
+  display: flex;
+  background: var(--terminal-bg);
+  border: 1px solid var(--panel-border);
+  overflow: hidden;
+}
+.alloc-segment {
+  height: 100%;
+  transition: flex 0.3s ease;
+  position: relative;
+}
+.alloc-segment--stocks { background: var(--sky-blue); }
+.alloc-segment--fx { background: var(--amber); }
+.alloc-segment--crypto { background: var(--pixel-purple); }
+.alloc-segment--cash { background: var(--muted-gray); opacity: 0.4; }
+
+.portfolio-summary__cash {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: right;
+}
+.portfolio-summary__cash-label {
+  font-family: var(--font-heading);
+  font-size: 6px;
+  color: var(--muted-gray);
+  letter-spacing: 1px;
+}
+.portfolio-summary__cash-value {
+  font-family: var(--font-body);
+  font-size: 20px;
+  color: var(--off-white);
+  white-space: nowrap;
+}
+
+/* ── News Ticker ────────────────────────────────────────── */
+.news-ticker {
+  overflow: hidden;
+  border-top: 1px solid var(--panel-border);
+  padding: 5px 0;
+  background: rgba(0,0,0,0.3);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.news-ticker__badge {
+  font-family: var(--font-heading);
+  font-size: 7px;
+  color: var(--terminal-bg);
+  background: var(--amber);
+  padding: 4px 8px;
+  margin-right: 12px;
+  flex-shrink: 0;
+  letter-spacing: 1px;
+}
+.news-ticker__content {
+  display: inline-block;
+  white-space: nowrap;
+  animation: ticker-scroll 25s linear infinite;
+  font-family: var(--font-body);
+  font-size: 19px;
+  color: var(--amber);
+}
+
+/* ── Invest Button ──────────────────────────────────────── */
+.trading-screen__invest-btn {
+  padding: 12px 14px;
+  background: var(--terminal-bg);
+  border-top: 1px solid var(--panel-border);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* ── Speech Bubble ──────────────────────────────────────── */
+.speech-bubble {
+  position: absolute;
+  background: var(--panel-bg);
+  border: 2px solid var(--panel-border-bright);
+  padding: 8px 12px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--off-white);
+  z-index: 50;
+  max-width: 200px;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.5);
+}
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 16px;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 10px solid var(--panel-border-bright);
+}
+
+/* ── Portfolio Chart Panel ──────────────────────────────── */
+.portfolio-chart-panel {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.portfolio-chart-panel__title {
+  font-family: var(--font-heading);
+  font-size: 8px;
+  color: var(--off-white);
+}
+
+/* ── Charts Panel ──────────────────────────────────────── */
+.charts-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+}
+
+.charts-panel__tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--panel-border);
+  background: var(--terminal-bg);
+  flex-shrink: 0;
+}
+
+.charts-panel__tab {
+  font-family: var(--font-heading);
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: var(--muted-gray);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.charts-panel__tab:hover {
+  color: var(--off-white);
+  background: rgba(64, 196, 255, 0.04);
+}
+
+.charts-panel__tab--active {
+  color: var(--sky-blue);
+  border-bottom-color: var(--sky-blue);
+  background: rgba(64, 196, 255, 0.06);
+  text-shadow: 0 0 8px rgba(64, 196, 255, 0.3);
+}
+
+.charts-panel__tab-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.charts-panel__host {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.charts-panel__canvas-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  background: rgba(12, 24, 33, 0.4);
+  border: 1px solid rgba(30, 58, 95, 0.3);
+  border-radius: 3px;
+  padding: 8px;
+}
+
+/* ── Multi-Terminal Windows ─────────────────────────────── */
+.terminal-window {
+  position: absolute;
+  width: min(820px, 65vw);
+  height: auto;
+  aspect-ratio: 5 / 4;
+  max-height: calc(100% - 56px);
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  z-index: 40;
+  pointer-events: auto;
+  transition: box-shadow 0.15s;
+}
+
+.terminal-window--minimized .terminal-screen {
+  overflow: hidden;
+}
+
+.terminal-window--minimized .terminal-panel-area,
+.terminal-window--minimized .portfolio-summary,
+.terminal-window--minimized .news-ticker,
+.terminal-window--minimized .trading-screen__invest-btn {
+  display: none !important;
+}
+
+.terminal-window--minimized {
+  aspect-ratio: unset;
+  height: auto;
+  max-height: none;
+}
+
+.terminal-window--minimized .terminal-monitor {
+  height: auto;
+}
+
+.terminal-window--minimized .terminal-bezel {
+  flex: unset;
+}
+
+.terminal-window--minimized .terminal-screen {
+  height: auto;
+}
+
+/* Window control buttons (minimize, close) */
+.terminal-window__btns {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.terminal-window__ctrl-btn {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: filter 0.12s, transform 0.1s;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.terminal-window__ctrl-btn--close {
+  background: #ff5f57;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 0 6px rgba(255, 95, 87, 0.4);
+}
+
+.terminal-window__ctrl-btn--minimize {
+  background: #febc2e;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 0 6px rgba(254, 188, 46, 0.3);
+}
+
+/* Icon inside dot — hidden until hover */
+.terminal-window__ctrl-icon {
+  font-size: 8px;
+  line-height: 1;
+  font-family: var(--font-heading);
+  color: rgba(0, 0, 0, 0);
+  transition: color 0.1s;
+  pointer-events: none;
+  font-weight: bold;
+}
+
+/* Show icon text on parent button group hover */
+.terminal-window__btns:hover .terminal-window__ctrl-icon {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.terminal-window__ctrl-btn:hover {
+  filter: brightness(1.15);
+  transform: scale(1.12);
+}
+
+.terminal-window__ctrl-btn:active {
+  transform: scale(0.9);
+  filter: brightness(0.85);
+}
+
+/* ── Close animation (Windows-style: shrink to taskbar + fade) ── */
+@keyframes terminal-close {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    transform-origin: center bottom;
+  }
+  40% {
+    opacity: 0.7;
+    transform: scale(0.92) translateY(4px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.7) translateY(24px);
+    transform-origin: center bottom;
+  }
+}
+
+.terminal-window--closing {
+  animation: terminal-close 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
+  pointer-events: none;
+}
+
+/* Spawn terminal button (taskbar) */
+.terminal-taskbar {
+  position: fixed;
+  bottom: 12px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  z-index: 100;
+}
+
+.terminal-taskbar__spawn {
+  font-family: var(--font-heading);
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--sky-blue);
+  background: rgba(6, 13, 20, 0.85);
+  border: 2px solid rgba(64, 196, 255, 0.35);
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.terminal-taskbar__spawn:hover {
+  border-color: rgba(64, 196, 255, 0.7);
+  box-shadow: 0 0 16px rgba(64, 196, 255, 0.2);
+  background: rgba(16, 30, 48, 0.9);
+}
+
+.terminal-taskbar__spawn-icon {
+  font-size: 14px;
+}
+
+/* Minimized window pill in taskbar */
+.terminal-taskbar__pill {
+  font-family: var(--font-heading);
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: var(--muted-gray-light);
+  background: rgba(6, 13, 20, 0.85);
+  border: 1px solid rgba(120, 160, 190, 0.25);
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-taskbar__pill:hover {
+  border-color: rgba(64, 196, 255, 0.5);
+  background: rgba(16, 30, 48, 0.9);
+}
+
+/* ── Desk Character Bob ─────────────────────────────────── */
+@keyframes desk-bob {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(2px); }
+  100% { transform: translateY(0px); }
+}

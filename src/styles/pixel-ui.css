@@ -1,0 +1,300 @@
+/* ============================================================
+   PIXEL UI COMPONENT LIBRARY — 64px Style
+   ============================================================ */
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.pixel-btn {
+  display: inline-block;
+  padding: 13px 28px;
+  background: var(--pixel-green);
+  color: var(--deep-navy);
+  font-family: var(--font-heading);
+  font-size: 11px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--pixel-green-dim), 0 0 16px var(--pixel-green-glow);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: transform 0.08s, box-shadow 0.08s;
+  user-select: none;
+  position: relative;
+  clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px));
+}
+.pixel-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+  pointer-events: none;
+}
+.pixel-btn:hover {
+  transform: translateY(2px);
+  box-shadow: 2px 2px 0 var(--pixel-green-dim), 0 0 20px var(--pixel-green-glow);
+}
+.pixel-btn:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
+.pixel-btn--gold {
+  background: var(--pixel-gold);
+  color: var(--deep-navy);
+  box-shadow: 4px 4px 0 var(--pixel-gold-dim), 0 0 16px var(--pixel-gold-glow);
+}
+.pixel-btn--gold:hover { box-shadow: 2px 2px 0 var(--pixel-gold-dim), 0 0 24px var(--pixel-gold-glow); }
+
+.pixel-btn--red {
+  background: var(--pixel-red);
+  color: #fff;
+  box-shadow: 4px 4px 0 var(--pixel-red-dim), 0 0 16px var(--pixel-red-glow);
+}
+.pixel-btn--red:hover { box-shadow: 2px 2px 0 var(--pixel-red-dim), 0 0 20px var(--pixel-red-glow); }
+
+.pixel-btn--blue {
+  background: var(--pixel-blue);
+  color: var(--deep-navy);
+  box-shadow: 4px 4px 0 var(--pixel-blue-dim), 0 0 16px var(--pixel-blue-glow);
+}
+.pixel-btn--blue:hover { box-shadow: 2px 2px 0 var(--pixel-blue-dim), 0 0 20px var(--pixel-blue-glow); }
+
+.pixel-btn--ghost {
+  background: transparent;
+  color: var(--muted-gray-light);
+  border: 2px solid var(--panel-border);
+  box-shadow: 2px 2px 0 var(--deep-navy);
+}
+.pixel-btn--ghost:hover {
+  color: var(--off-white);
+  border-color: var(--panel-border-bright);
+  box-shadow: 1px 1px 0 var(--deep-navy);
+}
+
+.pixel-btn--large {
+  font-size: 14px;
+  padding: 18px 36px;
+  box-shadow: 5px 5px 0 var(--pixel-green-dim), 0 0 24px var(--pixel-green-glow);
+}
+.pixel-btn--large.pixel-btn--gold {
+  box-shadow: 5px 5px 0 var(--pixel-gold-dim), 0 0 24px var(--pixel-gold-glow);
+}
+
+.pixel-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+}
+
+/* Small action buttons (LONG/SHORT inside asset rows) */
+.pixel-btn--xs {
+  font-size: 7px;
+  padding: 5px 8px;
+  letter-spacing: 0.5px;
+  box-shadow: 2px 2px 0 var(--pixel-green-dim);
+  clip-path: none;
+}
+
+/* ── Panels ───────────────────────────────────────────────── */
+.pixel-panel {
+  background: var(--panel-bg);
+  border: 2px solid var(--panel-border);
+  padding: 16px;
+  position: relative;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4), inset 0 0 0 1px var(--panel-inner);
+}
+.pixel-panel--bright {
+  border-color: var(--panel-border-bright);
+}
+.pixel-panel--gold {
+  border-color: var(--pixel-gold-dim);
+  box-shadow: 0 0 20px var(--pixel-gold-glow), inset 0 0 0 1px var(--panel-inner);
+}
+
+/* ── Stat Bars ────────────────────────────────────────────── */
+.pixel-stat-bar {
+  height: 10px;
+  background: var(--terminal-bg);
+  border: 1px solid var(--panel-border);
+  position: relative;
+  overflow: hidden;
+}
+.pixel-stat-bar__fill {
+  height: 100%;
+  transition: width 0.5s ease;
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: linear-gradient(90deg, var(--pixel-green-dim), var(--pixel-green));
+}
+
+/* ── Cards ────────────────────────────────────────────────── */
+.pixel-card {
+  background: var(--panel-bg);
+  border: 2px solid var(--panel-border);
+  padding: 20px;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
+}
+.pixel-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--panel-border-bright);
+  box-shadow: 4px 8px 0 rgba(0,0,0,0.5), 0 0 16px rgba(0,170,255,0.1);
+}
+.pixel-card--selected {
+  border-color: var(--pixel-gold);
+  box-shadow: 4px 4px 0 var(--pixel-gold-dim), 0 0 24px var(--pixel-gold-glow);
+}
+
+/* ── Tooltip ──────────────────────────────────────────────── */
+.pixel-tooltip {
+  position: absolute;
+  background: var(--terminal-bg);
+  border: 2px solid var(--panel-border-bright);
+  padding: 8px 14px;
+  font-family: var(--font-body);
+  font-size: 18px;
+  color: var(--off-white);
+  z-index: 500;
+  white-space: nowrap;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.5);
+}
+.pixel-tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid var(--panel-border-bright);
+}
+
+/* ── Tabs ─────────────────────────────────────────────────── */
+.pixel-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--panel-border);
+  background: var(--terminal-bg);
+  padding: 0 4px;
+}
+.pixel-tab {
+  padding: 9px 18px;
+  font-family: var(--font-heading);
+  font-size: 9px;
+  background: transparent;
+  border: none;
+  color: var(--muted-gray);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  letter-spacing: 0.5px;
+  transition: color 0.15s;
+  position: relative;
+}
+.pixel-tab:hover {
+  color: var(--muted-gray-light);
+}
+.pixel-tab--active {
+  color: var(--off-white);
+  border-bottom-color: var(--pixel-gold);
+  text-shadow: 0 0 8px var(--pixel-gold-glow);
+}
+.pixel-tab--stocks.pixel-tab--active { border-bottom-color: var(--sky-blue); }
+.pixel-tab--fx.pixel-tab--active { border-bottom-color: var(--amber); }
+.pixel-tab--crypto.pixel-tab--active { border-bottom-color: var(--pixel-purple); }
+
+/* Browser-like tabs variant (used for trading/market pages) */
+.pixel-tabs--browser {
+  border-bottom: 1px solid var(--panel-border);
+  padding: 6px 8px 0;
+  gap: 6px;
+  background: rgba(0,0,0,0.25);
+}
+
+.pixel-tab--browser {
+  border: 1px solid var(--panel-border);
+  border-bottom: none;
+  padding: 10px 14px 9px;
+  margin: 0;
+  font-size: 8px;
+  color: var(--muted-gray-light);
+  background: rgba(6, 13, 20, 0.25);
+  clip-path: polygon(0 100%, 0 10px, 10px 0, calc(100% - 10px) 0, 100% 10px, 100% 100%);
+}
+
+.pixel-tab--browser.pixel-tab--hover {
+  color: var(--off-white);
+  border-color: var(--panel-border-bright);
+}
+
+.pixel-tab--browser.pixel-tab--active {
+  color: var(--off-white);
+  background: rgba(12, 21, 32, 0.9);
+  border-color: var(--panel-border-bright);
+  box-shadow: 0 -6px 16px rgba(0,0,0,0.35);
+  text-shadow: none;
+}
+
+/* Active accent strip (like a browser selected tab) */
+.pixel-tab--browser.pixel-tab--active::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 0;
+  height: 2px;
+  background: var(--pixel-gold);
+  opacity: 0.9;
+}
+.pixel-tab--browser.pixel-tab--stocks.pixel-tab--active::after { background: var(--sky-blue); }
+.pixel-tab--browser.pixel-tab--fx.pixel-tab--active::after { background: var(--amber); }
+.pixel-tab--browser.pixel-tab--crypto.pixel-tab--active::after { background: var(--pixel-purple); }
+
+/* ── Sliders ──────────────────────────────────────────────── */
+.pixel-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  background: var(--terminal-bg);
+  height: 6px;
+  border: 1px solid var(--panel-border);
+  outline: none;
+  cursor: pointer;
+  position: relative;
+}
+.pixel-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 22px;
+  background: var(--pixel-gold);
+  cursor: pointer;
+  border: 2px solid var(--pixel-gold-dim);
+  box-shadow: 0 0 6px var(--pixel-gold-glow);
+}
+.pixel-slider::-moz-range-thumb {
+  width: 14px;
+  height: 22px;
+  background: var(--pixel-gold);
+  cursor: pointer;
+  border: 2px solid var(--pixel-gold-dim);
+  border-radius: 0;
+}
+.pixel-slider::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    90deg,
+    var(--pixel-gold) var(--slider-pct, 0%),
+    var(--terminal-bg) var(--slider-pct, 0%)
+  );
+  border: 1px solid var(--panel-border);
+  height: 6px;
+}
+
+/* Slider value display */
+.slider-value {
+  font-family: var(--font-heading);
+  font-size: 9px;
+  color: var(--pixel-gold);
+  min-width: 32px;
+  text-align: right;
+}

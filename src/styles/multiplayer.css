@@ -1,0 +1,999 @@
+/* ── Arena Screen (persistent video backdrop + overlay layers) ──────────── */
+
+.arena-screen {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: transparent;
+  font-family: 'Press Start 2P', monospace;
+}
+
+/* ── Layer 1: Video wrapper — 80% centred, home-screen style ─────────────── */
+
+.arena-screen__video-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 80%;
+  border-radius: 24px;
+  border: 2px solid rgba(42, 77, 122, 0.55);
+  box-shadow: 0 24px 120px rgba(0, 0, 0, 0.65);
+  overflow: hidden;
+  z-index: 3;
+  background: #000;
+}
+
+/* Inner highlight ring */
+.arena-screen__video-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* CRT scanlines + flicker — identical to home screen */
+.arena-screen__video-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(180deg,
+    transparent 0px,
+    transparent 3px,
+    rgba(0, 0, 0, 0.2) 3px,
+    rgba(0, 0, 0, 0.2) 6px);
+  background-size: 100% 6px;
+  pointer-events: none;
+  z-index: 4;
+  mix-blend-mode: overlay;
+  animation: tv-scroll 3s linear infinite, tv-flicker 0.12s infinite alternate;
+  border-radius: inherit;
+}
+
+@keyframes tv-scroll {
+  from { background-position: 0 0; }
+  to   { background-position: 0 60px; }
+}
+
+@keyframes tv-flicker {
+  0%, 100% { opacity: 0.9; }
+  50%       { opacity: 0.7; }
+}
+
+.arena-screen__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+  z-index: 0;
+  /* Same CRT grade as home screen */
+  filter: sepia(0.1) saturate(0.75) contrast(0.8) brightness(0.55) hue-rotate(-5deg);
+}
+
+/* Bottom gradient inside wrapper so HUD text is readable */
+.arena-screen__video-wrapper-gradient {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to top, rgba(7, 9, 15, 0.85) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 2;
+  border-radius: 0 0 24px 24px;
+}
+
+/* Scanlines node kept but now invisible — real scanlines are on the wrapper */
+.arena-screen__scanlines {
+  display: none;
+}
+
+/* ── Layer 2: Moment overlays ────────────────────────────────────────────── */
+
+.arena-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* Player seat anchors (positioned as % of container) */
+.arena-seat {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.arena-seat--left  { left: 24%; top: 38%; transform: translateX(-50%); }
+.arena-seat--right { left: 76%; top: 38%; transform: translateX(-50%); }
+
+.arena-seat__avatar {
+  font-size: 28px;
+  filter: drop-shadow(0 0 8px rgba(0, 200, 255, 0.6));
+}
+
+.arena-seat__name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #e8f4f8;
+  text-shadow: 1px 1px 0 #000, 0 0 12px rgba(0,0,0,0.9);
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arena-seat__status-badge {
+  font-size: 7px;
+  padding: 2px 6px;
+  border: 1px solid currentColor;
+  letter-spacing: 1px;
+}
+
+.arena-seat__status-badge--waiting  { color: #8899aa; }
+.arena-seat__status-badge--ready    { color: #00e676; }
+.arena-seat__status-badge--playing  { color: #40c4ff; }
+.arena-seat__status-badge--finished { color: #ffd700; }
+
+/* Decision score bubble near each seat */
+.arena-seat__decision-score {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.7);
+  border: 1px solid #40c4ff;
+  padding: 2px 8px;
+  font-size: 9px;
+  color: #40c4ff;
+  white-space: nowrap;
+}
+
+/* ── Moment flash ────────────────────────────────────────────────────────── */
+
+.arena-moment {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  transform: translateX(-50%);
+  background: rgba(7, 9, 15, 0.88);
+  border: 2px solid #40c4ff;
+  box-shadow: 0 0 24px rgba(64, 196, 255, 0.35), 4px 4px 0 #0a0e1a;
+  padding: 12px 20px;
+  min-width: 260px;
+  max-width: 480px;
+  text-align: center;
+  pointer-events: none;
+  animation: moment-appear 0.25s ease-out forwards;
+  z-index: 13;
+}
+
+.arena-moment--red   { border-color: #ff1744; box-shadow: 0 0 24px rgba(255,23,68,0.35), 4px 4px 0 #0a0e1a; }
+.arena-moment--gold  { border-color: #ffd700; box-shadow: 0 0 24px rgba(255,215,0,0.35), 4px 4px 0 #0a0e1a; }
+.arena-moment--green { border-color: #00e676; box-shadow: 0 0 24px rgba(0,230,118,0.35), 4px 4px 0 #0a0e1a; }
+
+.arena-moment__label {
+  font-size: 8px;
+  color: #8899aa;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+}
+
+.arena-moment__text {
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  color: #e8f4f8;
+  line-height: 1.3;
+}
+
+.arena-moment__edge {
+  font-size: 16px;
+  margin-top: 4px;
+  color: #00e676;
+}
+
+.arena-moment__edge--negative { color: #ff1744; }
+
+@keyframes moment-appear {
+  from { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.92); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0)   scale(1); }
+}
+
+/* ── News ticker overlay ─────────────────────────────────────────────────── */
+
+.arena-news-ticker {
+  position: absolute;
+  top: 16px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 7;
+  pointer-events: none;
+}
+
+.arena-news-ticker__text {
+  background: rgba(7,9,15,0.82);
+  border: 1px solid #1e3a5f;
+  padding: 4px 20px;
+  font-size: 10px;
+  color: #ffab40;
+  letter-spacing: 1px;
+  animation: ticker-slide-in 0.4s ease-out;
+}
+
+@keyframes ticker-slide-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Countdown overlay ───────────────────────────────────────────────────── */
+
+.arena-countdown {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(7,9,15,0.55);
+  z-index: 23;
+  pointer-events: none;
+}
+
+.arena-countdown__number {
+  font-size: 120px;
+  color: #ffd700;
+  text-shadow: 0 0 40px rgba(255,215,0,0.6), 6px 6px 0 #0a0e1a;
+  animation: countdown-pulse 1s ease-in-out;
+  line-height: 1;
+}
+
+.arena-countdown__label {
+  font-size: 12px;
+  color: #8899aa;
+  margin-top: 16px;
+  letter-spacing: 3px;
+}
+
+@keyframes countdown-pulse {
+  0%   { transform: scale(1.3); opacity: 0; }
+  30%  { transform: scale(1);   opacity: 1; }
+  80%  { transform: scale(1);   opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0; }
+}
+
+/* ── Waiting room overlay ────────────────────────────────────────────────── */
+
+.arena-waiting {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(7,9,15,0.92);
+  border: 2px solid #1e3a5f;
+  box-shadow: 4px 4px 0 #0a0e1a, 0 0 40px rgba(64,196,255,0.1);
+  padding: 28px 36px;
+  text-align: center;
+  min-width: 300px;
+  z-index: 18;
+}
+
+.arena-waiting__title {
+  font-size: 12px;
+  color: #40c4ff;
+  margin-bottom: 16px;
+  letter-spacing: 2px;
+}
+
+.arena-waiting__code {
+  font-size: 28px;
+  color: #ffd700;
+  text-shadow: 2px 2px 0 #0a0e1a, 0 0 20px rgba(255,215,0,0.4);
+  letter-spacing: 6px;
+  margin: 12px 0;
+}
+
+.arena-waiting__code-label {
+  font-size: 8px;
+  color: #546e7a;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+.arena-waiting__pulse {
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  color: #8899aa;
+  animation: waiting-blink 1.2s step-end infinite;
+}
+
+@keyframes waiting-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.arena-waiting__join-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: #0a0e1a;
+  border: 2px solid #1e3a5f;
+  color: #e8f4f8;
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  text-align: center;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.arena-waiting__join-input:focus {
+  border-color: #40c4ff;
+  box-shadow: 0 0 8px rgba(64,196,255,0.3);
+}
+
+/* ── Layer 3: Bottom HUD ─────────────────────────────────────────────────── */
+
+.arena-hud {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 8;
+  padding: 0 20px env(safe-area-inset-bottom, 12px);
+}
+
+/* Score strip */
+.arena-hud__scores {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  gap: 12px;
+}
+
+.arena-hud__player-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  flex: 1;
+}
+
+.arena-hud__player-card--right { align-items: flex-end; }
+
+.arena-hud__player-name {
+  font-size: 8px;
+  color: #8899aa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.arena-hud__portfolio {
+  font-size: 16px;
+  color: #e8f4f8;
+  font-family: 'VT323', monospace;
+}
+
+.arena-hud__decision-score {
+  font-size: 7px;
+  color: #40c4ff;
+  letter-spacing: 1px;
+}
+
+.arena-hud__vs {
+  font-size: 14px;
+  color: #546e7a;
+  flex-shrink: 0;
+}
+
+/* Progress */
+.arena-hud__progress {
+  width: 100%;
+  height: 4px;
+  background: rgba(30,58,95,0.7);
+  margin: 4px 0 8px;
+  position: relative;
+}
+
+.arena-hud__progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #40c4ff, #00e676);
+  transition: width 0.4s ease;
+}
+
+/* Sim status */
+.arena-hud__status {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  color: #8899aa;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+/* Control buttons row */
+.arena-hud__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-bottom: 8px;
+}
+
+/* Read token badge */
+.arena-hud__read-tokens {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 7px;
+  color: #ce93d8;
+  letter-spacing: 1px;
+}
+
+.arena-hud__read-token-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ce93d8;
+}
+
+.arena-hud__read-token-dot--used { background: #2e2e3a; }
+
+/* ── Layer 4: Decision event modal ───────────────────────────────────────── */
+
+.arena-decision {
+  position: absolute;
+  inset: 0;
+  background: rgba(7,9,15,0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 33;
+}
+
+.arena-decision__panel {
+  background: #0d1828;
+  border: 2px solid #40c4ff;
+  box-shadow: 6px 6px 0 #0a0e1a, 0 0 40px rgba(64,196,255,0.2);
+  padding: 24px;
+  max-width: 560px;
+  width: 92%;
+  position: relative;
+}
+
+.arena-decision__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.arena-decision__icon { font-size: 28px; }
+
+.arena-decision__title {
+  font-size: 11px;
+  color: #40c4ff;
+  flex: 1;
+}
+
+.arena-decision__timer {
+  font-family: 'VT323', monospace;
+  font-size: 24px;
+  color: #ffab40;
+}
+
+.arena-decision__timer--urgent { color: #ff1744; animation: urgent-blink 0.5s step-end infinite; }
+
+@keyframes urgent-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+.arena-decision__body {
+  font-family: 'VT323', monospace;
+  font-size: 19px;
+  color: #b0bec5;
+  line-height: 1.4;
+  margin-bottom: 16px;
+}
+
+/* A/B choice buttons */
+.arena-decision__choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.arena-decision__choice-btn {
+  padding: 10px;
+  background: #0a0e1a;
+  border: 2px solid #1e3a5f;
+  color: #e8f4f8;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  cursor: pointer;
+  transition: all 0.1s;
+  text-align: center;
+}
+
+.arena-decision__choice-btn:hover {
+  border-color: #40c4ff;
+  box-shadow: 0 0 8px rgba(64,196,255,0.3);
+}
+
+.arena-decision__choice-btn--selected {
+  border-color: #00e676;
+  background: rgba(0,230,118,0.1);
+  box-shadow: 3px 3px 0 #0a0e1a;
+}
+
+.arena-decision__choice-hint {
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  color: #546e7a;
+  margin-top: 4px;
+}
+
+/* Intent selector */
+.arena-decision__intent-section {
+  margin-bottom: 12px;
+}
+
+.arena-decision__section-label {
+  font-size: 8px;
+  color: #546e7a;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.arena-decision__intents {
+  display: flex;
+  gap: 8px;
+}
+
+.arena-decision__intent-btn {
+  flex: 1;
+  padding: 6px;
+  background: #0a0e1a;
+  border: 2px solid #1e3a5f;
+  color: #8899aa;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.1s;
+}
+
+.arena-decision__intent-btn:hover { border-color: #546e7a; }
+
+.arena-decision__intent-btn--defensive { }
+.arena-decision__intent-btn--neutral   { }
+.arena-decision__intent-btn--aggressive { }
+
+.arena-decision__intent-btn--selected {
+  border-color: #ce93d8;
+  background: rgba(206,147,216,0.1);
+  color: #ce93d8;
+}
+
+/* Mind-game action row */
+.arena-decision__mindgame {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.arena-decision__mindgame-btn {
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid #1e3a5f;
+  color: #8899aa;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.arena-decision__mindgame-btn:hover { border-color: #ce93d8; color: #ce93d8; }
+.arena-decision__mindgame-btn--active { border-color: #ce93d8; color: #ce93d8; background: rgba(206,147,216,0.1); }
+.arena-decision__mindgame-btn--disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Submit */
+.arena-decision__submit {
+  width: 100%;
+  padding: 12px;
+  background: #40c4ff;
+  border: none;
+  box-shadow: 3px 3px 0 #0d2137;
+  color: #07090f;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.arena-decision__submit:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 #0d2137;
+}
+
+.arena-decision__submit:active {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 #0d2137;
+}
+
+.arena-decision__submit:disabled {
+  background: #1e3a5f;
+  color: #546e7a;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 3px 3px 0 #0a0e1a;
+}
+
+/* Social proof bar (opponent stats) */
+.arena-decision__social {
+  margin-top: 12px;
+  font-family: 'VT323', monospace;
+  font-size: 15px;
+  color: #546e7a;
+}
+
+.arena-decision__social-bar {
+  width: 100%;
+  height: 6px;
+  background: #1e3a5f;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.arena-decision__social-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #40c4ff, #00e676);
+  transition: width 0.5s ease;
+}
+
+/* ── Outcome feedback flash ───────────────────────────────────────────────── */
+
+.arena-outcome-flash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(7,9,15,0.95);
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 32px rgba(255,215,0,0.4), 4px 4px 0 #0a0e1a;
+  padding: 20px 32px;
+  text-align: center;
+  z-index: 38;
+  animation: outcome-flash-in 0.3s ease-out;
+  pointer-events: none;
+}
+
+@keyframes outcome-flash-in {
+  from { opacity: 0; transform: translate(-50%, -60%) scale(0.85); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.arena-outcome-flash__title {
+  font-size: 10px;
+  color: #8899aa;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.arena-outcome-flash__edge {
+  font-size: 40px;
+  color: #ffd700;
+  font-family: 'VT323', monospace;
+}
+
+.arena-outcome-flash__edge--positive { color: #00e676; }
+.arena-outcome-flash__edge--negative { color: #ff1744; }
+
+.arena-outcome-flash__details {
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  color: #b0bec5;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+/* ── Config screen (centered over video) ─────────────────────────────────── */
+
+.arena-config {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(7,9,15,0.72);
+  z-index: 28;
+}
+
+.arena-config__panel {
+  background: #0d1828;
+  border: 2px solid #40c4ff;
+  box-shadow: 6px 6px 0 #0a0e1a;
+  padding: 28px 32px;
+  max-width: 480px;
+  width: 92%;
+}
+
+.arena-config__title {
+  font-size: 13px;
+  color: #40c4ff;
+  text-align: center;
+  margin-bottom: 24px;
+  letter-spacing: 2px;
+}
+
+.arena-config__row {
+  margin-bottom: 18px;
+}
+
+.arena-config__label {
+  font-size: 8px;
+  color: #546e7a;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.arena-config__tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.arena-config__tab {
+  padding: 6px 14px;
+  border: 2px solid #1e3a5f;
+  background: transparent;
+  color: #8899aa;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.arena-config__tab--active {
+  border-color: #40c4ff;
+  color: #40c4ff;
+  background: rgba(64,196,255,0.08);
+}
+
+.arena-config__input {
+  width: 100%;
+  padding: 10px 14px;
+  background: #0a0e1a;
+  border: 2px solid #1e3a5f;
+  color: #e8f4f8;
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.arena-config__input:focus { border-color: #40c4ff; }
+
+.arena-config__or-divider {
+  text-align: center;
+  font-size: 9px;
+  color: #546e7a;
+  margin: 18px 0;
+  letter-spacing: 4px;
+}
+
+.arena-config__error {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  color: #ff1744;
+  text-align: center;
+  min-height: 20px;
+  margin-top: 8px;
+}
+
+/* ── Landing panel (two-column HOST / JOIN) ─────────────────────────────── */
+
+.arena-landing {
+  max-width: 640px !important;
+}
+
+.arena-landing__cols {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+}
+
+.arena-landing__side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 8px;
+}
+
+.arena-landing__side:first-child {
+  padding-right: 20px;
+}
+
+.arena-landing__side:last-child {
+  padding-left: 20px;
+}
+
+.arena-landing__divider {
+  width: 1px;
+  background: #1e3a5f;
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.arena-landing__heading {
+  font-size: 9px;
+  color: #40c4ff;
+  letter-spacing: 2px;
+}
+
+.arena-landing__desc {
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  color: #8899aa;
+  line-height: 1.4;
+}
+
+.arena-landing__join-input {
+  letter-spacing: 4px;
+  text-align: center;
+}
+
+/* ── Character picker ────────────────────────────────────────────────────── */
+
+.arena-char-picker {
+  max-width: 720px !important;
+}
+
+.arena-char-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 16px 0 4px;
+}
+
+.arena-char-grid--two {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.arena-char-card {
+  --char-color: #40c4ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 8px 10px;
+  background: #0a0e1a;
+  border: 2px solid #1e3a5f;
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s, background 0.12s;
+  text-align: center;
+}
+
+.arena-char-card:hover {
+  border-color: var(--char-color);
+  background: rgba(64,196,255,0.04);
+}
+
+.arena-char-card--selected {
+  border-color: var(--char-color);
+  background: rgba(64,196,255,0.08);
+  box-shadow: 3px 3px 0 #0a0e1a, 0 0 18px rgba(64,196,255,0.2);
+}
+
+.arena-char-card__avatar {
+  font-size: 30px;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px rgba(64,196,255,0.5));
+}
+
+.arena-char-card__video-wrap {
+  width: 180px;
+  height: 180px;
+  overflow: hidden;
+  position: relative;
+  background: #07090f;
+  margin-bottom: 4px;
+}
+
+.arena-char-card__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  image-rendering: pixelated;
+}
+
+.arena-char-card__name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.arena-char-card__quote {
+  font-family: 'VT323', monospace;
+  font-size: 13px;
+  color: #546e7a;
+  line-height: 1.3;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Market picker tiles ────────────────────────────────────────────────── */
+
+.arena-market-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 20px 0 4px;
+}
+
+.arena-market-tile {
+  --tile-color: #40c4ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 10px;
+  background: #0a0e1a;
+  border: 2px solid #1e3a5f;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.arena-market-tile:hover {
+  border-color: var(--tile-color);
+  box-shadow: 0 0 10px rgba(64, 196, 255, 0.2);
+}
+
+.arena-market-tile--selected {
+  border-color: var(--tile-color);
+  background: rgba(64, 196, 255, 0.07);
+  box-shadow: 3px 3px 0 #0a0e1a, 0 0 16px rgba(64, 196, 255, 0.2);
+}
+
+.arena-market-tile__icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.arena-market-tile__label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #e8f4f8;
+}
+
+.arena-market-tile__risk {
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  color: #546e7a;
+}

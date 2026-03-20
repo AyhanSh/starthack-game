@@ -1,0 +1,361 @@
+/* ============================================================
+   HOME SCREEN — Fund Fight Entry
+   ============================================================ */
+
+.home-screen {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  justify-content: center;
+  background: transparent;
+}
+
+/* ── Video container — 70% of screen ─────────────────────── */
+.home-screen__video-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  border-radius: 24px;
+  height: 80%;
+  border: 2px solid rgba(42, 77, 122, 0.55);
+  box-shadow: 0 24px 120px rgba(0, 0, 0, 0.65);
+  overflow: hidden;
+  z-index: 3;
+  background: #000;
+}
+
+.home-screen__video-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.home-screen__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+  /* Authentic Vintage CRT Color Grade */
+  filter: sepia(0.15) saturate(0.6) contrast(0.7) brightness(0.4) hue-rotate(-10deg) blur(0.5px);
+}
+
+/* ── CRT TV Scanlines & Flicker Overlay ── */
+.home-screen__video-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(180deg,
+      transparent 0px,
+      transparent 3px,
+      rgba(0, 0, 0, 0.2) 3px,
+      rgba(0, 0, 0, 0.2) 6px);
+  background-size: 100% 6px;
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: overlay;
+  animation: tv-scroll 3s linear infinite, tv-flicker 0.12s infinite alternate;
+}
+
+@keyframes tv-scroll {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 0 60px;
+  }
+}
+
+@keyframes tv-flicker {
+
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+
+
+/* ── Centered content area ────────────────────────────────── */
+.home-screen__content {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: home-fadeIn 1.2s ease-out;
+}
+
+/* ── Game Title ───────────────────────────────────────────── */
+.home-screen__title {
+  font-family: var(--font-heading);
+  font-size: 52px;
+  color: var(--pixel-gold);
+  text-align: center;
+  text-shadow:
+    0 0 40px var(--pixel-gold-glow),
+    0 0 80px var(--pixel-gold-glow),
+    0 4px 0 var(--pixel-gold-dim),
+    0 6px 0 rgba(0, 0, 0, 0.4);
+  letter-spacing: 6px;
+  animation: home-titlePulse 3s ease-in-out infinite;
+  user-select: none;
+  line-height: 1.2;
+}
+
+/* ── Subtitle ─────────────────────────────────────────────── */
+.home-screen__subtitle {
+  font-family: var(--font-body);
+  font-size: 26px;
+  color: var(--muted-gray-light);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+  user-select: none;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* ── Button container ─────────────────────────────────────── */
+.home-screen__buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: center;
+  animation: home-slideUp 1s ease-out 0.4s both;
+}
+
+/* ── Enhanced pixel buttons ───────────────────────────────── */
+.home-screen__btn {
+  min-width: 320px;
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  padding: 22px 48px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  position: relative;
+  border: none;
+  color: var(--deep-navy);
+  user-select: none;
+  transition: transform 0.1s, box-shadow 0.1s;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+}
+
+/* Inner highlight / sheen */
+.home-screen__btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.25) 0%,
+      rgba(255, 255, 255, 0.08) 35%,
+      transparent 55%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Pixel corner notches (decorative) */
+.home-screen__btn::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px));
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ── Sandbox button (gold) ────────────────────────────────── */
+.home-screen__btn--sandbox {
+  background: linear-gradient(180deg, #ffe066 0%, var(--pixel-gold) 40%, #c7a600 100%);
+  box-shadow:
+    5px 5px 0 var(--pixel-gold-dim),
+    0 0 24px var(--pixel-gold-glow),
+    0 0 60px rgba(255, 215, 0, 0.12),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.15);
+}
+
+.home-screen__btn--sandbox:hover {
+  transform: translateY(3px);
+  box-shadow:
+    2px 2px 0 var(--pixel-gold-dim),
+    0 0 32px var(--pixel-gold-glow),
+    0 0 80px rgba(255, 215, 0, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.home-screen__btn--sandbox:active {
+  transform: translateY(5px);
+  box-shadow:
+    0 0 0 var(--pixel-gold-dim),
+    0 0 40px var(--pixel-gold-glow);
+}
+
+/* ── Leaderboard button (green-emerald) ───────────────────── */
+.home-screen__btn--leaderboard {
+  background: linear-gradient(180deg, #66ffb2 0%, #00c76a 40%, #007a40 100%);
+  color: var(--deep-navy);
+  box-shadow:
+    5px 5px 0 #005a2e,
+    0 0 24px rgba(0, 200, 100, 0.4),
+    0 0 60px rgba(0, 200, 100, 0.1),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.15);
+}
+
+.home-screen__btn--leaderboard:hover {
+  transform: translateY(3px);
+  box-shadow:
+    2px 2px 0 #005a2e,
+    0 0 32px rgba(0, 200, 100, 0.5),
+    0 0 80px rgba(0, 200, 100, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.home-screen__btn--leaderboard:active {
+  transform: translateY(5px);
+  box-shadow: 0 0 0 #005a2e, 0 0 40px rgba(0, 200, 100, 0.4);
+}
+
+/* ── Multiplayer button (blue-cyan) ───────────────────────── */
+.home-screen__btn--multi {
+  background: linear-gradient(180deg, #55ccff 0%, var(--pixel-blue) 40%, #0077cc 100%);
+  color: #fff;
+  box-shadow:
+    5px 5px 0 var(--pixel-blue-dim),
+    0 0 24px var(--pixel-blue-glow),
+    0 0 60px rgba(0, 170, 255, 0.1),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* ── Disabled / Coming Soon ───────────────────────────────── */
+.home-screen__btn--disabled {
+  opacity: 0.3;
+  cursor: not-allowed !important;
+  filter: grayscale(0.4);
+}
+
+.home-screen__btn--disabled:hover {
+  transform: none !important;
+}
+
+.home-screen__coming-soon {
+  font-family: var(--font-heading);
+  font-size: 8px;
+  color: var(--muted-gray);
+  letter-spacing: 2px;
+  margin-top: -8px;
+  text-transform: uppercase;
+  user-select: none;
+  animation: home-blink 2s ease-in-out infinite;
+}
+
+/* ── Decorative pixel corner accents on the content ───────── */
+.home-screen__content::before,
+.home-screen__content::after {
+  content: '◆';
+  position: absolute;
+  font-size: 10px;
+  color: var(--pixel-gold-dim);
+  opacity: 0.5;
+}
+
+.home-screen__content::before {
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.home-screen__content::after {
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* ── Version / footer tag ─────────────────────────────────── */
+.home-screen__footer {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  font-family: var(--font-heading);
+  font-size: 8px;
+  color: var(--muted-gray);
+  letter-spacing: 1px;
+  user-select: none;
+  opacity: 0.4;
+}
+
+/* ── Animations ───────────────────────────────────────────── */
+@keyframes home-fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes home-titlePulse {
+
+  0%,
+  100% {
+    text-shadow:
+      0 0 40px var(--pixel-gold-glow),
+      0 0 80px var(--pixel-gold-glow),
+      0 4px 0 var(--pixel-gold-dim),
+      0 6px 0 rgba(0, 0, 0, 0.4);
+  }
+
+  50% {
+    text-shadow:
+      0 0 60px var(--pixel-gold-glow),
+      0 0 120px var(--pixel-gold-glow),
+      0 0 200px rgba(255, 215, 0, 0.1),
+      0 4px 0 var(--pixel-gold-dim),
+      0 6px 0 rgba(0, 0, 0, 0.4);
+  }
+}
+
+@keyframes home-slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes home-blink {
+
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}

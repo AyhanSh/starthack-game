@@ -1,0 +1,284 @@
+/* ============================================================
+   TUTORIAL CAROUSEL — Pixel-themed onboarding overlay
+   ============================================================ */
+
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.tutorial-overlay--visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.tutorial-overlay--exit {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tutorial-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 6, 12, 0.88);
+  backdrop-filter: blur(4px);
+}
+
+/* ── Modal ──────────────────────────────────────────────────── */
+
+.tutorial-modal {
+  position: relative;
+  width: 90vw;
+  max-width: 640px;
+  background: var(--panel-bg, #0c1520);
+  border: 2px solid var(--pixel-blue, #00aaff);
+  box-shadow:
+    0 0 40px rgba(0, 170, 255, 0.15),
+    0 0 80px rgba(0, 170, 255, 0.05),
+    6px 6px 0 rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tutorial-modal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 170, 255, 0.04) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+
+.tutorial-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--panel-border, #1a3355);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.tutorial-header__title {
+  font-family: var(--font-heading, 'Press Start 2P', monospace);
+  font-size: 11px;
+  color: var(--pixel-blue, #00aaff);
+  letter-spacing: 1px;
+}
+
+.tutorial-header__counter {
+  font-family: var(--font-body, 'VT323', monospace);
+  font-size: 18px;
+  color: var(--muted-gray-light, #7090a8);
+}
+
+/* ── Viewport & Track ───────────────────────────────────────── */
+
+.tutorial-viewport {
+  width: 100%;
+  overflow: hidden;
+}
+
+.tutorial-track {
+  display: flex;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+
+/* ── Slide ──────────────────────────────────────────────────── */
+
+.tutorial-slide {
+  min-width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.tutorial-slide__img-wrap {
+  width: 100%;
+  background: #060d14;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-bottom: 1px solid var(--panel-border, #1a3355);
+  position: relative;
+  max-height: 320px;
+}
+
+.tutorial-slide__img-wrap::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(to top, var(--panel-bg, #0c1520), transparent);
+  pointer-events: none;
+}
+
+.tutorial-slide__img {
+  width: 100%;
+  height: auto;
+  max-height: 320px;
+  object-fit: cover;
+  display: block;
+  image-rendering: auto;
+}
+
+.tutorial-slide__content {
+  padding: 20px 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tutorial-slide__badge {
+  display: inline-block;
+  align-self: flex-start;
+  font-family: var(--font-heading, 'Press Start 2P', monospace);
+  font-size: 7px;
+  color: var(--pixel-gold, #ffd700);
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  padding: 4px 10px;
+  letter-spacing: 1.5px;
+}
+
+.tutorial-slide__title {
+  font-family: var(--font-heading, 'Press Start 2P', monospace);
+  font-size: 13px;
+  color: var(--off-white, #ddeeff);
+  letter-spacing: 0.5px;
+}
+
+.tutorial-slide__desc {
+  font-family: var(--font-body, 'VT323', monospace);
+  font-size: 22px;
+  color: var(--muted-gray-light, #7090a8);
+  line-height: 1.35;
+}
+
+/* ── Dots ───────────────────────────────────────────────────── */
+
+.tutorial-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 0 4px;
+}
+
+.tutorial-dot {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--muted-gray, #4a6580);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.tutorial-dot:hover {
+  border-color: var(--pixel-blue, #00aaff);
+}
+
+.tutorial-dot--active {
+  background: var(--pixel-blue, #00aaff);
+  border-color: var(--pixel-blue, #00aaff);
+  box-shadow: 0 0 8px rgba(0, 170, 255, 0.4);
+}
+
+/* ── Footer / Nav Buttons ───────────────────────────────────── */
+
+.tutorial-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px 18px;
+}
+
+.tutorial-btn {
+  font-family: var(--font-heading, 'Press Start 2P', monospace);
+  font-size: 9px;
+  padding: 10px 20px;
+  border: 2px solid var(--panel-border-bright, #2a4d7a);
+  background: var(--panel-bg-light, #111f30);
+  color: var(--muted-gray-light, #7090a8);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.5px;
+}
+
+.tutorial-btn:hover {
+  border-color: var(--pixel-blue, #00aaff);
+  color: var(--off-white, #ddeeff);
+  background: rgba(0, 170, 255, 0.08);
+}
+
+.tutorial-btn--next {
+  border-color: var(--pixel-blue, #00aaff);
+  color: var(--pixel-blue, #00aaff);
+}
+
+.tutorial-btn--next:hover {
+  background: rgba(0, 170, 255, 0.15);
+  box-shadow: 0 0 12px rgba(0, 170, 255, 0.2);
+}
+
+.tutorial-btn--start {
+  border-color: var(--pixel-gold, #ffd700);
+  color: var(--pixel-gold, #ffd700);
+  animation: tutorial-pulse 1.5s ease-in-out infinite;
+}
+
+.tutorial-btn--start:hover {
+  background: rgba(255, 215, 0, 0.12);
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.25);
+}
+
+@keyframes tutorial-pulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(255, 215, 0, 0); }
+  50% { box-shadow: 0 0 14px rgba(255, 215, 0, 0.2); }
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .tutorial-modal {
+    width: 96vw;
+    max-width: none;
+  }
+
+  .tutorial-slide__img {
+    max-height: 200px;
+  }
+
+  .tutorial-slide__img-wrap {
+    max-height: 200px;
+  }
+
+  .tutorial-slide__content {
+    padding: 14px 16px 12px;
+  }
+
+  .tutorial-slide__title {
+    font-size: 10px;
+  }
+
+  .tutorial-slide__desc {
+    font-size: 18px;
+  }
+
+  .tutorial-btn {
+    font-size: 7px;
+    padding: 8px 14px;
+  }
+}

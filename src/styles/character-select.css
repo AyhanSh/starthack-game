@@ -1,0 +1,169 @@
+/* ============================================================
+   CHARACTER SELECT SCREEN — 64px Style
+   ============================================================ */
+
+.character-select {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 48px;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: #1e3a5f transparent;
+}
+
+
+
+/* Ground floor line */
+.character-select__ground {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--panel-border-bright);
+  opacity: 0.3;
+}
+
+.character-select__title {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  color: var(--pixel-gold);
+  text-align: center;
+  margin-top: 36px;
+  text-shadow: 0 0 24px var(--pixel-gold-glow), 0 2px 0 var(--pixel-gold-dim);
+  z-index: 10;
+  letter-spacing: 2px;
+}
+
+.character-select__subtitle {
+  font-family: var(--font-body);
+  font-size: 22px;
+  color: var(--muted-gray-light);
+  text-align: center;
+  margin: 8px 0 28px;
+  z-index: 10;
+}
+
+.character-select__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 200px);
+  gap: 16px;
+  padding: 0 20px;
+  z-index: 10;
+}
+
+/* ── Character Card ─────────────────────────────────────── */
+.character-card {
+  background: var(--panel-bg);
+  border: 2px solid var(--panel-border);
+  padding: 20px 16px;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  box-shadow: 5px 5px 0 rgba(0,0,0,0.5);
+  text-align: center;
+}
+.character-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.character-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--panel-border-bright);
+  box-shadow: 5px 11px 0 rgba(0,0,0,0.5), 0 0 20px rgba(0,170,255,0.12);
+}
+
+.character-card--selected {
+  border-color: var(--pixel-gold);
+  box-shadow: 5px 5px 0 var(--pixel-gold-dim), 0 0 28px var(--pixel-gold-glow);
+}
+.character-card--selected::after {
+  content: '▶ SELECTED';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-family: var(--font-heading);
+  font-size: 5px;
+  color: var(--pixel-gold);
+  letter-spacing: 0.5px;
+}
+
+/* Character video area */
+.character-card__video-wrap {
+  margin: 0 auto 16px;
+  display: block;
+  width: 160px;
+  height: 160px;
+  overflow: hidden;
+  position: relative;
+  background: #07090f;
+}
+
+.character-card__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  image-rendering: pixelated;
+}
+
+.character-card__name {
+  font-family: var(--font-heading);
+  font-size: 9px;
+  margin-bottom: 4px;
+  color: var(--off-white);
+  letter-spacing: 0.5px;
+}
+
+.character-card__role {
+  font-family: var(--font-body);
+  font-size: 17px;
+  color: var(--muted-gray-light);
+  margin-bottom: 14px;
+}
+
+.character-card__quote {
+  font-family: var(--font-body);
+  font-size: 18px;
+  color: var(--muted-gray);
+  font-style: italic;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--panel-border);
+  line-height: 1.3;
+}
+
+/* Confirm button row */
+.character-select__confirm {
+  margin-top: 20px;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.character-select__confirm--visible {
+  opacity: 1;
+}
+
+.onboarding-panel {
+  z-index: 20;
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 960px) {
+  .character-select__grid {
+    grid-template-columns: repeat(2, 200px);
+  }
+}
