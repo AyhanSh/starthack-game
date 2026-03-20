@@ -2,8 +2,11 @@
     "buildCommand": "npm run build",
     "outputDirectory": "dist",
     "rewrites": [
-      { "source": "/api/(.*)", "destination": "/api/$1" },
-      { "source": "/(.*)", "destination": "/index.html" }
+      { "source": "/api/coach", "destination": "/api/coach.ts" },
+      {
+        "source": "/((?!docs|assets|favicon\\.svg|bg-room\\.png|data|tutorial).*)",
+        "destination": "/index.html"
+      }
     ]
   }
   
