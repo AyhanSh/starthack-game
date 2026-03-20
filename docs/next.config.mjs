@@ -6,14 +6,10 @@ const withMDX = createMDX();
 const config = {
   serverExternalPackages: ['@takumi-rs/image-response'],
   reactStrictMode: true,
-  async rewrites() {
-    return [
-      {
-        source: '/docs/:path*.mdx',
-        destination: '/llms.mdx/docs/:path*',
-      },
-    ];
-  },
+  output: 'export',
+  basePath: '/docs',
+  trailingSlash: true,
+  images: { unoptimized: true },
 };
 
 export default withMDX(config);

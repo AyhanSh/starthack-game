@@ -1,9 +1,10 @@
 {
-    "buildCommand": "npm run build",
-    "outputDirectory": "dist",
-    "rewrites": [
-      { "source": "/api/(.*)", "destination": "/api/$1" },
-      { "source": "/(.*)", "destination": "/index.html" }
-    ]
-  }
-  
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "routes": [
+    { "src": "/api/coach", "dest": "/api/coach.ts" },
+    { "src": "/docs", "dest": "/docs/index.html" },
+    { "src": "/docs/(.*)", "dest": "/docs/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
