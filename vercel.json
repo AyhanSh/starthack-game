@@ -1,0 +1,15 @@
+{
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "functions": {
+      "api/coach.ts": {
+        "memory": 256,
+        "maxDuration": 30
+      }
+    },
+    "rewrites": [
+      { "source": "/api/coach", "destination": "/api/coach" },
+      { "source": "/(.*)", "destination": "/index.html" }
+    ]
+  }
+  
