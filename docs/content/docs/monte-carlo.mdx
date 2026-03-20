@@ -1,0 +1,85 @@
+---
+title: Monte Carlo Projections
+description: How the projection cone is calculated using Geometric Brownian Motion and 200 simulated paths.
+---
+
+## How it works
+
+While the simulation replays known historical prices, the projection cone shows players where their portfolio *might* go in the future — using 200 randomly simulated paths based on recent market behaviour. The cone's width reflects uncertainty: a volatile all-equity portfolio shows a wider cone than a diversified one. Players see this update live as they rebalance or face events, making the risk/reward trade-off tangible.
+
+## The Method: Geometric Brownian Motion
+
+The projection uses **Geometric Brownian Motion (GBM)** — the same stochastic model underlying the Black-Scholes options pricing formula. It models asset prices as log-normally distributed, which correctly captures that prices can't go below zero and that percentage returns (not absolute returns) follow a normal distribution.
+
+### Step 1: Estimate portfolio drift (μ) and volatility (σ)
+
+For each position in the current portfolio, the engine looks at the last 52 weeks of actual price data and computes log returns:
+
+```ts
+logReturn_t = ln(price_t / price_{t-1})
+```
+
+From these, it calculates weekly mean return and weekly variance, then annualises:
+
+```ts
+muAnnualized    = meanWeekly × 52
+sigmaAnnualized = sqrt(variance × 52)  // realized volatility
+```
+
+The portfolio-level μ and σ are computed as value-weighted averages across all non-cash positions:
+
+```ts
+muPortfolio    += weight_i × mu_i
+sigmaPortfolio += weight_i × sigma_i
+```
+
+If fewer than 8 weeks of price history exist (early in the game), fallback values are used: μ = 6%, σ = 15%.
+
+### Step 2: Convert to weekly GBM parameters
+
+```ts
+weeklyMu    = muPortfolio / 52
+weeklySigma = sigmaPortfolio / sqrt(52)
+```
+
+### Step 3: Simulate 200 paths
+
+For each of 200 paths, the engine steps forward tick-by-tick using the GBM formula:
+
+```ts
+// projection.ts
+value_t = value_{t-1} × exp(weeklyMu - 0.5 × weeklySigma² + weeklySigma × Z)
+```
+
+Where `Z` is a standard normal random variable generated via Box-Muller transform. Monthly contributions are added every 4 ticks.
+
+Values are stored at monthly granularity (every 4th tick) to keep memory bounded.
+
+### Step 4: Compute percentiles
+
+At each stored time point, the 200 path values are sorted and percentiles extracted:
+
+| Percentile | Meaning |
+|-----------|---------|
+| p5 | Bottom 5% of outcomes — worst-case scenario |
+| p25 | Lower quartile |
+| p50 | Median — most likely outcome |
+| p75 | Upper quartile |
+| p95 | Top 5% — best-case scenario |
+
+The resulting cone (p5 to p95) is displayed as a shaded area chart in the UI.
+
+## Target Probability
+
+The engine also computes the probability of reaching the player's savings target:
+
+```ts
+target = currentPortfolio + monthlyContribution × remainingMonths
+targetProbability = (paths where finalValue > target) / 200 × 100
+```
+
+This gives players a simple "X% chance of reaching your goal" number that updates in real time.
+
+## Performance
+
+Running 200 paths × 520 ticks = 104,000 iterations in the browser. With `Float64Array` buffers and no object allocation inside the loop, this completes in under 50ms on modern hardware. The projection is recalculated every 4 ticks and immediately after any rebalance.

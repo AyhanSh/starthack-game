@@ -1,0 +1,69 @@
+---
+title: Overview
+description: What FundFight is, why it was built, and how the system is structured.
+---
+
+## What is FundFight?
+
+FundFight is a gamified investment education platform built for PostFinance. It lets beginners experience 10 years of real financial markets in minutes — making portfolio decisions, navigating life events, and learning the principles of long-term investing without risking real money.
+
+The core problem it solves: most people avoid investing because markets feel abstract and frightening. FundFight makes the consequences of common behavioural mistakes — panic selling, cash hoarding, over-trading — immediately visible and personally felt.
+
+## System Architecture
+
+FundFight is a full-stack Next.js application with four distinct layers:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Browser (Client)                                       │
+│  ┌────────────────────┐  ┌──────────────────────────┐  │
+│  │  React UI          │  │  Game Engine (TypeScript) │  │
+│  │  (shadcn/ui +      │  │  simulation.ts            │  │
+│  │   Tailwind CSS)    │  │  portfolio.ts             │  │
+│  │                    │  │  events.ts                │  │
+│  │                    │  │  projection.ts            │  │
+│  │                    │  │  scoring.ts               │  │
+│  └────────────────────┘  └──────────────────────────┘  │
+└──────────────────────────────┬──────────────────────────┘
+                               │ API calls
+┌──────────────────────────────▼──────────────────────────┐
+│  Next.js API Routes (Server)                            │
+│  /api/players  /api/sessions  /api/seeds                │
+│  /api/coach    /api/leaderboard  /api/event-choices     │
+│  /api/battle/rooms (PvP)                                │
+└──────────────┬───────────────┬──────────────────────────┘
+               │               │
+  ┌────────────▼───┐     ┌─────▼────────────┐
+  │  Supabase      │     │  Claude Haiku API │
+  │  (PostgreSQL + │     │  (AI Coach)       │
+  │   Realtime)    │     │  Streaming SSE    │
+  └────────────────┘     └──────────────────┘
+```
+
+**Key design decision:** The simulation engine runs entirely client-side in TypeScript. All financial calculations — returns, rebalancing, Monte Carlo projections, scoring — happen in the browser. The server handles persistence, AI coach messages, and PvP tick broadcasting. In Battle Mode, the server advances a shared tick counter via Supabase Realtime, and each client runs its own engine locally using `advanceToTick()` to stay in sync.
+
+## Game Flow
+
+A single game session follows this sequence:
+
+1. **Player setup** — nickname, avatar, device ID stored in Supabase
+2. **Scenario selection** — player picks one of four curated 10-year market windows
+3. **Price data fetch** — ~21,000 weekly price rows loaded into browser memory
+4. **Portfolio builder** — player allocates starting capital across 21 assets
+5. **Simulation** — engine runs at 1×/3×/5× speed; 1 tick = 1 week
+6. **Life events** — financial decisions fire at predetermined ticks
+7. **Results** — composite score, behavioural profile, comparison to benchmark
+8. **Leaderboard** — final score posted to global rankings
+
+In **Battle Mode**, two players compete head-to-head on the same scenario. The server broadcasts ticks via Supabase Realtime; both players face the same events at the same ticks but make independent decisions. See [PvP Battle Mode](/docs/pvp-battle) for details.
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS 4 |
+| UI Components | shadcn/ui (Radix UI primitives) |
+| Game Engine | Pure TypeScript, client-side |
+| Database | Supabase (PostgreSQL) |
+| AI Coach | Claude Haiku via Anthropic API (streaming SSE) |
+| Package Manager | Yarn 4.6 (monorepo workspaces) |

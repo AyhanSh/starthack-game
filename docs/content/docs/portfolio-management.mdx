@@ -1,0 +1,89 @@
+---
+title: Portfolio Management
+description: How rebalancing works, how panic sells are detected, and how the benchmark baseline is calculated.
+---
+
+## How it works
+
+Players can rebalance their portfolio at any time during the simulation — shifting allocation percentages between assets. The engine detects when a rebalance looks like an emotional panic reaction (selling during a crash) and penalises it in the final score. A silent benchmark portfolio runs in parallel to give players a reference point: "how would you have done if you'd never touched anything?"
+
+## Rebalancing
+
+When the player submits new allocation percentages, `rebalancePortfolio()` is called:
+
+```ts
+// portfolio.ts
+function rebalancePortfolio(
+  totalValue: number,
+  newAllocations: Array<{ assetId: string; pct: number }>
+): PortfolioPosition[] {
+  return newAllocations.map(a => ({
+    assetId: a.assetId,
+    pct: a.pct,
+    value: totalValue * (a.pct / 100),
+  }));
+}
+```
+
+This is a full redistribution — the total portfolio value is preserved, but each position's value is recalculated from the new percentage. There are no transaction costs modelled (intentional simplification for the educational context).
+
+## Panic Sell Detection
+
+After every rebalance, the engine checks whether it qualifies as a panic rebalance:
+
+```ts
+// simulation.ts — handleRebalance()
+const isPanic =
+  state.currentDrawdownPct > 15        // portfolio is down >15% from peak
+  && newSafePct - prevSafePct > 20;    // cash/bonds allocation jumped >20pp
+```
+
+Safe assets are: `cash`, `ch_bond` (Swiss government bonds), `gold_chf`.
+
+If both conditions are true, `panicRebalances` is incremented. Each panic rebalance deducts 15 points from the discipline score.
+
+**Why this matters educationally:** panic selling — converting to safe assets during a downturn — is the most common and costly investing mistake. By naming it, measuring it, and penalising it, FundFight makes the abstract concept visceral.
+
+## Lump Sum Operations
+
+Life events can add or remove lump sums from the portfolio. `applyLumpSum()` distributes the change proportionally across all positions:
+
+```ts
+// portfolio.ts
+positions.map(pos => ({
+  ...pos,
+  value: Math.max(0, pos.value + amount * (pos.value / totalPortfolio))
+}))
+```
+
+A positive `amount` adds (e.g. inheritance); negative subtracts (e.g. medical bill). Values are clamped to 0 — no negative positions.
+
+## Full Panic Sell
+
+The market crash life event gives players the option to sell everything immediately:
+
+```ts
+// portfolio.ts — moveAllToCash()
+function moveAllToCash(positions): PortfolioPosition[] {
+  const total = getTotalPortfolio(positions);
+  return positions.map(pos =>
+    pos.assetId === "cash"
+      ? { ...pos, value: total, pct: 100 }
+      : { ...pos, value: 0, pct: 0 }
+  );
+}
+```
+
+This is deliberately unconditional — they must manually rebalance back. The delay teaches how hard it is to time re-entry into markets after panic selling.
+
+## The Benchmark
+
+A "do nothing" baseline portfolio runs silently alongside every game. It is initialised with the player's starting allocation and never rebalanced — but does receive monthly contributions at the base rate.
+
+`benchmarkFinal` is the value this portfolio would have reached at tick 520. It serves as the denominator in the portfolio component of the composite score:
+
+```
+portfolioScore = min(finalPortfolio / benchmarkFinal × 80, 100)
+```
+
+Matching the benchmark earns 80 points; beating it by 25% earns the maximum 100. This calibration ensures that simply doing nothing is already a respectable outcome — reinforcing the long-term investing message.

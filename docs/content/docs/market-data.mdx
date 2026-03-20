@@ -1,0 +1,80 @@
+---
+title: Market Data & Scenarios
+description: How real historical price data is stored, how scenarios work, and how data is fetched for a game session.
+---
+
+## How it works
+
+FundFight uses real historical market data — not simulated prices. The game selects a 10-year window of actual weekly prices across 21 investable assets, covering indices, stocks, bonds, gold, and currencies. Players make decisions using the same data that governed real portfolios during that period.
+
+## The Asset Universe
+
+The platform supports 21 tradable assets across four classes:
+
+| Class | Examples | Risk Level |
+|-------|---------|-----------|
+| `equity_index` | SMI, Euro Stoxx 50, S&P 500, DJIA | 3–4 |
+| `stock` | Nestlé, Novartis, Roche, Apple, Microsoft | 4–5 |
+| `bond` | Swiss Government Bond index | 1–2 |
+| `gold` | Gold priced in CHF | 2–3 |
+
+Assets are stored in the `assets` table in Supabase:
+
+```ts
+interface Asset {
+  id: string;           // e.g. "smi", "ch_bond", "gold_chf"
+  name: string;
+  asset_class: "equity_index" | "stock" | "bond" | "gold";
+  region: "CH" | "EU" | "US" | "global";
+  risk_level: number;   // 1 (low) to 5 (high)
+}
+```
+
+## Price Data
+
+Historical prices are stored in the `weekly_prices` table — approximately 21,000 rows covering ~20 years of weekly data:
+
+```ts
+interface WeeklyPrice {
+  asset_id: string;   // foreign key → assets.id
+  week_index: number; // absolute week number in the dataset
+  date: string;       // ISO date
+  price: number;      // closing price in CHF
+}
+```
+
+When a game session begins, all prices for the selected scenario are loaded into browser memory as a flat lookup table:
+
+```ts
+// In memory during a game:
+Record<string, number[]>
+// e.g. { "smi": [7200, 7215, 7190, ...], "ch_bond": [105.2, 105.4, ...] }
+// Index = week offset within the scenario (0 → 519 for a 520-week game)
+```
+
+This design means all price lookups during simulation are O(1) array accesses — no network calls during gameplay.
+
+## Scenarios (Seeds)
+
+A **seed** defines a 10-year slice of market history. There are four curated seeds of increasing difficulty:
+
+```ts
+interface Seed {
+  id: string;
+  name: string;
+  total_weeks: number;     // always 520 (10 years × 52 weeks)
+  difficulty: "easy" | "medium" | "hard";
+  historical_events: HistoricalEvent[]; // flash-card news shown during sim
+  crash_weeks: number[];   // relative ticks where market crashes occur
+  reveal_title: string;    // shown at game end: e.g. "You lived through 2008–2018"
+  reveal_text: string;     // narrative context of that period
+}
+```
+
+Crash weeks are used by the event scheduler to time the market crash life event to coincide with an actual downturn in the price data — ensuring players experience real panic during real crashes.
+
+## API: Fetching Seeds and Prices
+
+**`GET /api/seeds`** — returns the list of available scenarios sorted by difficulty.
+
+**`GET /api/seeds/[id]/prices`** — fetches all price rows for a specific seed. This is the heaviest query (21 assets × 520 weeks ≈ 11,000 rows), taking 1–3 seconds on first load. The response is transformed client-side into the `Record<string, number[]>` lookup table used by the engine.

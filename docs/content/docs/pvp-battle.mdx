@@ -1,0 +1,90 @@
+---
+title: PvP Battle Mode
+description: How two players compete head-to-head on the same market scenario with a shared tick timeline.
+---
+
+## How it works
+
+Battle Mode lets two players compete head-to-head on the same market scenario. Both players experience the same ticks, the same price data, and the same life events — but make independent portfolio and event decisions. The server broadcasts tick numbers; each client runs its own simulation engine locally using `advanceToTick()`. At the end, players are ranked by composite score (tiebreak: final portfolio value).
+
+## Game Flow
+
+1. **Create room** — host picks a scenario (seed), starting portfolio, monthly contribution, and tick speed. A 4-character room code is generated (e.g. `ABCD`).
+2. **Join room** — second player enters the room code to join.
+3. **Ready up** — each player sets their portfolio allocation (must sum to 100%). When both are ready, the room moves to `countdown` status.
+4. **Start** — the host triggers game start. The server creates a `game_session` for each player and begins the tick loop.
+5. **Play** — the server advances `current_tick` on the room. Clients subscribe via Supabase Realtime, call `advanceToTick()` locally to sync their simulation, and periodically report their portfolio value back.
+6. **Life events** — at predetermined ticks, the server pauses the tick loop and sets an `active_event_key` with a deadline. Both players must choose before the deadline (or it expires). Once both choose (or timeout), ticking resumes.
+7. **Finish** — when all ticks are consumed, each client reports final results (portfolio, composite score, behavioural profile). Once both report, the server ranks them and marks the room as finished.
+
+## Room States
+
+| Status | Meaning |
+|--------|---------|
+| `waiting` | Room created, waiting for second player |
+| `countdown` | Both players ready, host can start |
+| `playing` | Tick loop is running |
+| `finished` | Game complete, results available |
+
+## Server-Side Tick Loop
+
+The tick loop runs entirely server-side via self-scheduling HTTP requests. When the game starts, the `/api/battle/rooms/[id]/start` endpoint fires the first tick. Each tick handler:
+
+1. Checks if the game is in an event decision window — if so, waits for both choices or timeout.
+2. Advances `current_tick` on the `battle_rooms` row.
+3. Checks if a life event should fire at this tick (deterministic schedule).
+4. If an event fires, pauses and sets a deadline. Otherwise, schedules the next tick after the speed-dependent interval.
+
+```
+Tick speed intervals:
+  1× → 800ms/tick  (~7 min for 520 ticks)
+  3× → 270ms/tick  (~2.3 min)
+  5× → 160ms/tick  (~83 sec)
+```
+
+## Battle Event Schedule
+
+In Battle Mode, life events fire at fixed ticks rather than randomised ranges (for fairness — both players face events at the same moment):
+
+| Tick | Event |
+|------|-------|
+| 60 | `career.opportunity` |
+| 140 | `personal.housing` |
+| 250 (or from seed) | `crisis.crash_news` |
+| 280 | `personal.health` |
+| 400 (or `totalTicks - 50`) | `crisis.windfall` |
+
+The crash event tick is taken from the seed's `crash_weeks` data when available, falling back to tick 250. Events use the same definitions, options, and effects as solo mode — only the scheduling differs.
+
+## Event Decision Window
+
+When an event fires:
+
+1. Server sets `active_event_key` and `event_deadline` on the room (default: 30 seconds).
+2. Tick loop pauses — no new ticks until the window closes.
+3. Each player submits their choice via the event-choice endpoint.
+4. When both players have chosen (or the deadline passes), the server clears the event fields and resumes ticking.
+
+Players can see whether their opponent has chosen (but not *what* they chose) until both have submitted. After both choose, choices are revealed.
+
+## Client Hook: `useBattleRoom`
+
+The `useBattleRoom(myPlayerId)` hook manages all battle state client-side:
+
+- **Supabase Realtime subscriptions** on `battle_rooms`, `battle_players`, and `battle_event_choices` for live updates.
+- **Derived state**: `myPlayer`, `opponent`, `isCreator`, `bothReady`, `bothFinished`, `isInEventWindow`, `eventSecondsLeft`.
+- **Actions**: `createRoom`, `joinRoom`, `setReady`, `startGame`, `submitEventChoice`, `reportPortfolio`, `reportFinished`.
+
+The hook subscribes to a Supabase channel named `battle:{roomId}` and listens for postgres changes on all three battle tables. An interval-based countdown timer tracks seconds remaining in event windows.
+
+## Scoring and Results
+
+Battle Mode uses the same composite scoring formula as solo mode:
+
+```
+compositeScore = portfolioScore × 0.40 + disciplineScore × 0.35 + eventScore × 0.25
+```
+
+When both players finish, the server ranks them by composite score (higher wins). If scores are tied, the higher final portfolio value breaks the tie. Each player receives a rank (1 or 2), and the room status is set to `finished`.
+
+Results include each player's final portfolio, composite score, behavioural profile, and rank — enabling a side-by-side comparison screen.

@@ -1,0 +1,109 @@
+---
+title: Scoring & Behavioral Profiles
+description: How the composite score is calculated and how players are classified into one of six behavioural archetypes.
+---
+
+## How it works
+
+At the end of each game, players receive a score out of 100 and are assigned a behavioural profile. The score rewards three things: beating the benchmark (portfolio performance), staying disciplined (avoiding panic and cash hoarding), and making good decisions during life events. The profile names what kind of investor the player's behaviour resembled — from "Diamond Hands" to "Panic Seller".
+
+## Composite Score Formula
+
+The composite score is a weighted average of three sub-scores, each on a 0–100 scale:
+
+```
+compositeScore = portfolioScore  × 0.40
+              + disciplineScore  × 0.35
+              + eventScore       × 0.25
+```
+
+### Portfolio Score (40% weight)
+
+Measures performance relative to the "do nothing" benchmark:
+
+```ts
+const ratio = finalPortfolio / benchmarkFinal;
+const portfolioScore = Math.min(ratio * 80, 100);
+```
+
+| Performance | Score |
+|------------|-------|
+| Matching benchmark exactly | 80 |
+| Beating benchmark by 25% | 100 (max) |
+| Below benchmark | Proportionally lower |
+
+**Design intent:** Even a passive investor who does nothing scores 80 on this dimension. The 25% outperformance threshold for a perfect 100 is deliberately high — few active strategies reliably beat a passive benchmark.
+
+### Discipline Score (35% weight)
+
+Measures behavioural quality — the absence of costly mistakes:
+
+```ts
+let disciplineScore = 100;
+disciplineScore -= panicRebalances * 15;                    // −15 per panic rebalance
+disciplineScore -= (cashHeavyWeeks / totalWeeks) * 30;      // up to −30 for hoarding
+disciplineScore -= Math.max(0, totalRebalances - 5) * 3;    // −3 per rebalance above 5
+disciplineScore = Math.max(0, disciplineScore);             // floor at 0
+```
+
+| Behaviour | Penalty |
+|-----------|---------|
+| Each panic rebalance | −15 points |
+| 100% of weeks cash-heavy | −30 points (pro-rated) |
+| Each rebalance above 5 total | −3 points |
+
+### Event Score (25% weight)
+
+Rewards smart choices during life events, weighted by educational importance:
+
+| Event | Optimal choice | Points |
+|-------|---------------|--------|
+| `crisis.crash_news` | Stay the course (option B) | 25 |
+| `career.opportunity` | Take the job (option A) | 15 |
+| `crisis.windfall` | Invest all (option A) | 10 |
+| All other events | — | 5 each |
+
+Raw points are normalised to 0–100 against the maximum possible for events that actually fired. If no events fired, event score defaults to 50 (neutral).
+
+## Behavioural Profiles
+
+After scoring, `detectBehavioralProfile()` classifies the player using priority-ordered rules — first match wins:
+
+```ts
+// scoring.ts
+if (panicRebalances >= 1 && chainState.crisis.panicSold)
+  return "panic_seller";
+
+if (cashHeavyWeeks >= totalWeeks * 0.3)   // cash > 50% for 30%+ of weeks
+  return "cash_hoarder";
+
+if (totalRebalances >= 8)
+  return "overthinker";
+
+if (finalPortfolio > benchmarkFinal && panicRebalances === 0)
+  return "strategist";
+
+if (totalRebalances <= 2 && cashHeavyWeeks < totalWeeks * 0.1)
+  return "diamond_hands";
+
+return "momentum_chaser";  // fallback
+```
+
+### Profile Descriptions
+
+| Profile | Behaviour | Educational message |
+|---------|-----------|-------------------|
+| **Panic Seller** 🔴 | Sold during the crash, fled to safety | Fear drives the biggest financial mistakes |
+| **Cash Hoarder** 🏦 | Held >50% cash for extended periods | Cash feels safe but inflation erodes it |
+| **Overthinker** 🔄 | Made 8+ rebalances | Friction costs compound; less is often more |
+| **Strategist** 🎯 | Beat benchmark without panic | Rare skill — or lucky timing |
+| **Diamond Hands** 💎 | Barely touched portfolio through crashes | Boring but consistently effective |
+| **Momentum Chaser** 📊 | Active but no dominant pattern | Stayed engaged; mixed results |
+
+## PvP Ranking
+
+In [Battle Mode](/docs/pvp-battle), the same composite score formula determines the winner. When both players finish, the server ranks them: higher composite score wins. If scores are tied, the higher final portfolio value breaks the tie. Each player receives a rank (1 or 2). Battle results are also saved to `game_sessions`, so they appear on the global leaderboard alongside solo games.
+
+## Educational Design Intent
+
+The scoring formula is deliberately calibrated to make the "boring" strategy — low rebalancing, no panic, passive allocation — score well. This reinforces the core learning objective: long-term, low-intervention investing beats reactive decision-making.
