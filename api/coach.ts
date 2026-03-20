@@ -112,12 +112,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
+    console.error('[coach] ANTHROPIC_API_KEY is not set');
     res.status(500).json({ error: 'Missing ANTHROPIC_API_KEY' });
     return;
   }
 
   try {
     const context = req.body as CoachContext;
+    if (!context?.trigger) {
+      res.status(400).json({ error: 'Invalid request body' });
+      return;
+    }
+
     const { system, user } = buildCoachPrompt(context);
 
     const upstream = await fetch('https://api.anthropic.com/v1/messages', {
@@ -128,7 +134,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-haiku-4-5',
         max_tokens: 220,
         stream: true,
         system,
@@ -138,6 +144,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!upstream.ok) {
       const errorText = await upstream.text();
+      console.error('[coach] Anthropic error:', upstream.status, errorText);
       res.status(upstream.status).json({ error: errorText });
       return;
     }
@@ -180,8 +187,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     res.end();
   } catch (error: unknown) {
-    res.status(500).json({
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[coach] handler exception:', msg);
+    res.status(500).json({ error: msg });
   }
 }
