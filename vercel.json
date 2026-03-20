@@ -1,10 +1,11 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "routes": [
-    { "src": "/api/coach", "dest": "/api/coach.ts" },
-    { "src": "/docs", "dest": "/docs/index.html" },
-    { "src": "/docs/(.*)", "dest": "/docs/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/api/coach", "destination": "/api/coach.ts" },
+    {
+      "source": "/((?!docs|assets|favicon\\.svg|bg-room\\.png|data|tutorial).*)",
+      "destination": "/index.html"
+    }
   ]
 }
