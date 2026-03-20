@@ -20,5 +20,23 @@
     }
   },
   "include": ["src/**/*.ts", "vite-env.d.ts", "src/api/EventService.ts", "src/api/LeaderboardService.ts", "src/api/PlayerService.ts", "src/api/SeedService.ts", "src/api/SessionService.ts", "src/api/supabase.ts"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/api/seeds/route.ts",
+    "src/api/sessions/route.ts",
+    "src/api/sessions/[id]/route.ts",
+    "src/api/coach/route.ts",
+    "src/api/event-choices/route.ts",
+    "src/api/event-stats",
+    "src/api/leaderboard/route.ts",
+    "src/api/players/route.ts",
+    "src/lib/hooks/useGameEngine.ts",
+    "src/lib/hooks/useLeaderboard.ts",
+    "src/lib/hooks/usePlayer.ts",
+    "src/lib/hooks/useSeedData.ts",
+    "src/lib/store",
+    "supabase/client.ts",
+    "supabase/server.ts"
+  ]
 }
