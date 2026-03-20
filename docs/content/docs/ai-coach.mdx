@@ -1,0 +1,78 @@
+---
+title: AI Coach
+description: How the AI investment coach works — when it triggers, how prompts are built, and how responses are streamed to the browser.
+---
+
+## How it works
+
+FundFight includes an AI investment coach powered by Claude Haiku. The coach appears at key moments during gameplay — when the market crashes, before a life event decision, after a panic rebalance — and delivers short, personalised commentary in 2–3 sentences. It speaks like a knowledgeable friend, not a professor: using the player's actual numbers, explaining concepts without jargon, and never telling them what to do.
+
+## Trigger Types
+
+The coach fires on distinct triggers throughout the game:
+
+| Trigger | When it fires |
+|---------|--------------|
+| `game_start` | Player begins the simulation |
+| `market_crash` | Historical crash event fires |
+| `market_recovery` | Portfolio recovers after a crash |
+| `life_event_before` | Before the player sees an event's options |
+| `life_event_after` | After the player makes an event choice |
+| `panic_rebalance` | Player moves heavily to cash/bonds during a drawdown |
+| `all_in_equity` | Player moves to a very high equity allocation |
+| `cash_heavy` | Player has held >50% cash for an extended period |
+| `milestone` | Portfolio hits a significant growth milestone |
+| `game_end` | Simulation complete — personalised reflection |
+
+An 8-second cooldown prevents messages from overlapping. `game_end` always fires regardless of cooldown.
+
+## Prompt Construction
+
+Every coach message is built server-side by `buildCoachPrompt()` in `src/lib/engine/coach-prompts.ts`. It receives a `CoachContext` object containing live game state, then constructs a tailored prompt for that trigger.
+
+Example for `panic_rebalance`:
+
+```
+The player just shifted heavily toward cash/bonds during a market drawdown of 18.3%.
+They've now got 72% in cash. This is their 1st panic rebalance.
+Gently explain the concept of "selling low" and why it usually hurts long-term returns.
+Be empathetic, not preachy.
+```
+
+The system prompt establishes the coach's persona: a friendly financial educator, never prescriptive, always referencing the player's actual portfolio numbers.
+
+```ts
+// coach-prompts.ts — SYSTEM_PROMPT
+"You are a friendly investment coach inside a financial education game...
+Give brief, educational commentary (2-3 sentences max, never more).
+Use simple language — no jargon without explanation.
+Never give specific financial advice — always frame as educational."
+```
+
+## Streaming SSE Delivery
+
+The `/api/coach` endpoint forwards the prompt to Claude Haiku with `stream: true`, then re-streams the response as Server-Sent Events to the browser:
+
+```
+POST /api/coach
+Body: CoachContext (trigger + portfolio state + event data)
+
+Response: text/event-stream
+data: {"text": "Markets "}
+data: {"text": "can be "}
+data: {"text": "terrifying..."}
+```
+
+The server acts as a passthrough proxy — it receives Anthropic's SSE stream, extracts `content_block_delta` events, and re-emits them in a simplified format. This avoids exposing the Anthropic API key to the browser.
+
+## Technical Details
+
+| Property | Value |
+|----------|-------|
+| Model | `claude-haiku-4-5-20251001` |
+| Max tokens | 200 (enforces the 2–3 sentence constraint) |
+| Streaming | Server-Sent Events (SSE) |
+| Message history | None — each trigger is a stateless call |
+| Cooldown | 8 seconds between messages |
+
+The `useCoach` hook manages the SSE connection client-side, assembles streamed tokens into a full message, and exposes `currentMessage` and `messageHistory` to the UI.

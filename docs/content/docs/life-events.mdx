@@ -1,0 +1,109 @@
+---
+title: Life Event System
+description: How life events are defined, scheduled, and chained, and how player choices affect the portfolio.
+---
+
+## How it works
+
+Throughout the simulation, players face life events — realistic financial decisions that interrupt gameplay and force trade-offs. A career opportunity, a medical emergency, a market crash, an unexpected inheritance. Each event has two options with different financial consequences, and some events trigger follow-up events based on the player's choice, creating branching narrative chains.
+
+## Event Definition
+
+Every life event is defined by its effects on the portfolio and/or monthly contribution:
+
+```ts
+interface LifeEventDefinition {
+  key: string;           // e.g. "career.opportunity"
+  chain: "career" | "personal" | "crisis";
+  title: string;
+  description: string;
+  optionA: { label: string; hint: string; effect: EventEffect };
+  optionB: { label: string; hint: string; effect: EventEffect };
+}
+
+interface EventEffect {
+  portfolioChange?: number;       // lump sum: positive = add, negative = withdraw
+  contributionChange?: number;    // monthly delta
+  contributionDuration?: number;  // ticks until modifier expires (null = permanent)
+  moveAllToCash?: boolean;        // special: panic sell everything
+}
+```
+
+## The Events
+
+Events are grouped into three chains:
+
+### Career Chain
+
+| Event | Option A | Option B |
+|-------|---------|---------|
+| **Career Opportunity** — competitor offers 30% raise, CHF 5k relocation cost | Take the job: −CHF 5k, +CHF 150/mo permanent | Stay: no change |
+| **Promotion** *(follows A above)* — leadership role, CHF 3k dev cost | Accept: −CHF 3k, +CHF 100/mo | Decline: no change |
+| **Company Downsizing** *(follows B above)* — restructuring | Take severance: +CHF 8k, −CHF 200/mo for ~1 year | Reduced hours: −CHF 100/mo permanent |
+
+### Personal Chain
+
+| Event | Option A | Option B |
+|-------|---------|---------|
+| **Property Opportunity** — first apartment, CHF 15k down payment | Buy: −CHF 15k | Keep renting: −CHF 100/mo permanent |
+| **Medical Emergency** — CHF 6k out-of-pocket | Sell investments: −CHF 6k | Payment plan: −CHF 250/mo for ~6 months |
+| **Home Repair Crisis** *(follows buying above)* — roof, CHF 8k | Sell: −CHF 8k | Renovation loan: −CHF 150/mo for ~10 months |
+
+### Crisis Chain
+
+| Event | Option A | Option B |
+|-------|---------|---------|
+| **Markets in Freefall** — crash news, panic | Sell everything → move all to cash | Stay the course: no change |
+| **Unexpected Inheritance** — CHF 10k windfall | Invest all: +CHF 10k | Split: +CHF 5k invested, +CHF 5k cash |
+
+## Scheduling
+
+Events are scheduled at `initSimulation()` using random ticks within constrained ranges:
+
+```ts
+// events.ts — scheduleInitialEvents()
+const raw = [
+  { key: "career.opportunity", tick: randBetween(40, 80) },    // ~years 1–2
+  { key: "personal.housing",   tick: randBetween(100, 180) },  // ~years 2–4
+  { key: "personal.health",    tick: randBetween(250, 350) },  // ~years 5–7
+  { key: "crisis.crash_news",  tick: crashTick },               // from seed data
+  { key: "crisis.windfall",    tick: randBetween(350, 450) },  // ~years 7–9
+];
+```
+
+Events are sorted by tick and separated by at least 15 ticks to avoid overlap. The crash event tick is taken directly from the seed's `crash_weeks` data — ensuring the market crash event fires when the price data is actually crashing.
+
+### Battle Mode Scheduling
+
+In [PvP Battle Mode](/docs/pvp-battle), events fire at fixed ticks rather than randomised ranges — both players must face the same event at the same moment for fairness:
+
+| Fixed tick | Event |
+|-----------|-------|
+| 60 | `career.opportunity` |
+| 140 | `personal.housing` |
+| 250 (or seed crash) | `crisis.crash_news` |
+| 280 | `personal.health` |
+| 400 | `crisis.windfall` |
+
+The event definitions, options, and effects are identical to solo mode. Only the scheduling is deterministic.
+
+## Event Chaining
+
+After the player makes a choice, `scheduleFollowUpEvent()` determines whether a follow-up should be queued:
+
+```
+career.opportunity + chose A  →  queue career.promotion   (100–170 ticks later)
+career.opportunity + chose B  →  queue career.stagnation  (120–200 ticks later)
+personal.housing   + chose A  →  queue personal.renovation (150–250 ticks later)
+```
+
+Chain state is tracked in `chainState` — flags like `tookNewJob`, `boughtProperty`, `panicSold` — which feeds into behavioural profile detection at the end.
+
+## Applying Effects
+
+`applyEventEffect()` is called immediately when the player chooses an option:
+
+1. **Portfolio change** → `applyLumpSum(positions, amount)` — distributes proportionally across all positions
+2. **Move all to cash** → `moveAllToCash(positions)` — collapses everything into the cash bucket
+3. **Contribution change** → adds a `ContributionModifier` with optional expiry tick
+4. **Chain state update** → sets flags (e.g. `chainState.career.tookNewJob = true`)

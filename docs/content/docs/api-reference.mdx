@@ -1,0 +1,279 @@
+---
+title: API Reference
+description: All API endpoints and the Supabase database schema.
+---
+
+## API Endpoints
+
+All endpoints are Next.js API routes under `src/app/api/`. The server uses a Supabase service-role client for write operations and the anon key for reads.
+
+### `POST /api/players`
+
+Creates or retrieves a player by device ID (stored in browser localStorage).
+
+**Request body:**
+```json
+{ "device_id": "uuid", "nickname": "AlphaFund", "avatar": "🦅" }
+```
+
+**Response:** Full player object. If `device_id` already exists, returns the existing player (upsert — idempotent).
+
+---
+
+### `POST /api/sessions`
+
+Starts a new game session.
+
+**Request body:**
+```json
+{
+  "player_id": "uuid",
+  "seed_id": "uuid",
+  "starting_portfolio": 10000,
+  "monthly_contribution": 500
+}
+```
+
+**Response:** `{ "session_id": "uuid" }`
+
+---
+
+### `PUT /api/sessions/[id]`
+
+Records the final results of a completed session.
+
+**Request body:**
+```json
+{
+  "final_portfolio": 14320,
+  "composite_score": 72.5,
+  "behavioral_profile": "diamond_hands",
+  "total_rebalances": 2,
+  "panic_rebalances": 0,
+  "cash_heavy_weeks": 8,
+  "max_drawdown_pct": 22.4,
+  "benchmark_final": 13800,
+  "chain_state": { "career": { ... }, "personal": { ... }, "crisis": { ... } },
+  "duration_seconds": 184
+}
+```
+
+---
+
+### `GET /api/seeds`
+
+Returns available scenarios sorted by difficulty (easy → hard).
+
+**Response:** Array of seed objects (id, name, difficulty, description, reveal_title).
+
+---
+
+### `GET /api/seeds/[id]/prices`
+
+Returns all weekly price data for a scenario (~11,000 rows).
+
+**Response:** Array of `{ asset_id, week_index, price }`. Transformed client-side into `Record<string, number[]>`.
+
+---
+
+### `POST /api/event-choices`
+
+Records a player's life event choice for analytics. Fire-and-forget.
+
+**Request body:**
+```json
+{
+  "session_id": "uuid",
+  "event_key": "crisis.crash_news",
+  "chosen": "b",
+  "portfolio_at_choice": 9800
+}
+```
+
+A Supabase database trigger automatically updates the `event_choice_stats` aggregation table.
+
+---
+
+### `GET /api/event-stats/[key]`
+
+Returns social proof statistics for a specific event (shown to player after their choice).
+
+**Response:**
+```json
+{ "option_a_pct": 34, "option_b_pct": 66, "total_choices": 142 }
+```
+
+---
+
+### `GET /api/leaderboard`
+
+Returns top players by composite score. Accepts optional `?seed_id=` filter.
+
+**Response:** Array of `LeaderboardEntry` (nickname, avatar, score, profile, portfolio).
+
+---
+
+### `POST /api/coach`
+
+Streams an AI coach message. See [AI Coach](/docs/ai-coach) for details.
+
+---
+
+## Battle Mode Endpoints
+
+All battle endpoints live under `/api/battle/rooms/`. See [PvP Battle Mode](/docs/pvp-battle) for the full game flow.
+
+### `POST /api/battle/rooms`
+
+Creates a new battle room with a 4-character code.
+
+**Request body:**
+```json
+{
+  "playerId": "uuid",
+  "seedId": "uuid",
+  "startingPortfolio": 10000,
+  "monthlyContribution": 500,
+  "tickSpeed": 3
+}
+```
+
+**Response:** `{ "room": BattleRoom, "player": BattlePlayer }`
+
+---
+
+### `GET /api/battle/rooms`
+
+Lists active rooms with status `waiting` (for a lobby/browse view).
+
+---
+
+### `GET /api/battle/rooms/[id]`
+
+Returns room details and all players (with nickname/avatar from the `players` table).
+
+---
+
+### `POST /api/battle/rooms/[id]/join`
+
+Joins an existing room. Validates: room is `waiting`, not full, player not already in.
+
+**Request body:**
+```json
+{ "playerId": "uuid" }
+```
+
+---
+
+### `POST /api/battle/rooms/[id]/ready`
+
+Marks a player as ready with their chosen allocation. Allocations must sum to 100%. When both players are ready, room status moves to `countdown`.
+
+**Request body:**
+```json
+{
+  "playerId": "uuid",
+  "allocations": [{ "assetId": "smi", "pct": 40 }, { "assetId": "ch_bond", "pct": 60 }]
+}
+```
+
+---
+
+### `POST /api/battle/rooms/[id]/start`
+
+Host-only. Validates `countdown` status, creates `game_sessions` for each player, sets status to `playing`, and kicks off the server-side tick loop.
+
+**Request body:**
+```json
+{ "playerId": "uuid" }
+```
+
+---
+
+### `POST /api/battle/rooms/[id]/tick`
+
+Internal endpoint called by the server's self-scheduling tick loop. Advances the room's `current_tick`, fires life events, and schedules the next tick. Not intended to be called by clients directly.
+
+---
+
+### `POST /api/battle/rooms/[id]/event-choice`
+
+Submits a player's choice for the current life event.
+
+**Request body:**
+```json
+{ "playerId": "uuid", "eventKey": "career.opportunity", "chosen": "a" }
+```
+
+**Response:** `{ "yourChoice": "a", "opponentChoice": "b" | null, "bothChosen": true | false }`
+
+Duplicate submissions return 409. When both players have chosen, the event window is cleared and ticking resumes.
+
+---
+
+### `POST /api/battle/rooms/[id]/portfolio`
+
+Fire-and-forget portfolio value update. Called periodically by clients so opponents can see each other's progress.
+
+**Request body:**
+```json
+{ "playerId": "uuid", "portfolio": 12450 }
+```
+
+---
+
+### `POST /api/battle/rooms/[id]/finish`
+
+Reports final results. When both players have finished, the server ranks them and sets the room to `finished`.
+
+**Request body:**
+```json
+{
+  "playerId": "uuid",
+  "finalPortfolio": 14320,
+  "compositeScore": 72.5,
+  "behavioralProfile": "diamond_hands",
+  "snapshots": [...]
+}
+```
+
+**Response:** `{ "yourResult": BattlePlayer, "opponentResult": BattlePlayer, "bothFinished": bool, "winner": "uuid" | "tie" | null }`
+
+---
+
+## Database Schema
+
+All tables live in Supabase (PostgreSQL) with UUID primary keys.
+
+| Table | Purpose |
+|-------|---------|
+| `assets` | Asset definitions (name, class, region, risk level) — 21 rows |
+| `weekly_prices` | Historical prices indexed by asset + week — ~21,000 rows |
+| `seeds` | Scenario definitions (time windows, difficulty, events) — 4 rows |
+| `players` | Player identity (device_id, nickname, avatar) |
+| `game_sessions` | One row per completed game (scores, profile, state) |
+| `portfolio_snapshots` | Portfolio allocations captured at key moments |
+| `event_choices` | Individual event choice records |
+| `event_choice_stats` | Auto-aggregated A/B split per event (DB trigger) |
+| `leaderboard` | **View** (not table): top sessions sorted by composite score |
+| `battle_rooms` | PvP room state (code, status, tick, event window, config) |
+| `battle_players` | Per-room player state (ready, allocations, portfolio, results, rank) |
+| `battle_event_choices` | Event choices per player per room (UNIQUE constraint prevents duplicates) |
+
+### Key relationships
+
+```
+players ──< game_sessions ──< portfolio_snapshots
+             │
+             └──< event_choices ──> event_choice_stats (via DB trigger)
+
+players ──< battle_players ──< battle_event_choices
+                │
+                └──> battle_rooms
+                        │
+                        └──> seeds
+```
+
+`game_sessions.chain_state` is stored as JSONB — the full `ChainState` object capturing which career, personal, and crisis paths the player took.
+
+In Battle Mode, each `battle_player` is optionally linked to a `game_session` (created at game start), so battle results also appear in the global leaderboard.

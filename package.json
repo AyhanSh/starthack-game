@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && npm run build:docs",
+    "build:docs": "cd docs && npm install && npm run build && cp -r out/. ../dist/docs",
     "preview": "vite preview"
   },
   "dependencies": {
